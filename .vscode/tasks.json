@@ -1,0 +1,28 @@
+{
+    // See https://go.microsoft.com/fwlink/?LinkId=733558
+    // for the documentation about the tasks.json format
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "program",
+            "type": "shell",
+            "command": "cmake --build ./build --target flash",
+            "problemMatcher": [
+                "$gcc"
+            ]
+        },
+        {
+            "label": "read serial",
+            "type": "shell",
+            "command": "plink -serial COM3 -sercfg 8,1,19200",
+            "problemMatcher": []
+        },
+        {
+            "label": "clean",
+            "type": "shell",
+            "command": "cmake --build ./build --target clean",
+            "group": "none",
+            "problemMatcher": []
+        }
+    ]
+}
