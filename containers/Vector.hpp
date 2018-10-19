@@ -9,7 +9,6 @@
 #ifndef VECTOR_H_
 #define VECTOR_H_
 
-#include <sam.h>
 #include <cstddef>
 #include <math.h>
 #include <cstring>

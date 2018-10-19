@@ -10,8 +10,10 @@
 
 //#include <sam.h>
 #include <cstdint>
-#include "Queue.hpp"
+#include "containers/Queue.hpp"
 #include "UARTConnection.hpp"
+
+#include <sam.h>
 
 namespace UARTLib {
 

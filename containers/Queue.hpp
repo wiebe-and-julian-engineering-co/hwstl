@@ -8,6 +8,8 @@
  * @license   See LICENSE
  */
 
+using size_t = unsigned int;
+
 #ifndef QUEUE_HPP
 #define QUEUE_HPP
 
