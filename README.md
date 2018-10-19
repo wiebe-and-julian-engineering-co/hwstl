@@ -4,3 +4,7 @@
 
 An library which can support your C++ development experience, focused on embedded systems. The library is programmed in such a way that it
 causes minimal memory or flash overhead by using C++ template functionalities.
+
+### Design goals
+- Maximize compile time evaluation using constexpr and template metaprogramming
+- Cross-platform support for application code
