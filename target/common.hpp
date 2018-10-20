@@ -6,6 +6,7 @@
 namespace hwstl {
     static auto cout = hwstl::ostream<hwstl::target::uart_io>();
     static auto cin = hwstl::istream<hwstl::target::uart_io>();
+	static auto endl = '\n';
     static auto& cerr = cout;
 
     inline uint_fast64_t now_ticks() {
