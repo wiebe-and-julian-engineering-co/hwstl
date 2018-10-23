@@ -1,5 +1,10 @@
 #include "arduino-due.hpp" 
+#include <sam3xa.h>
  
+void hwstl::arduino_due::init() {
+    SystemInit();
+}
+
 uint_fast64_t hwstl::arduino_due::now_ticks(){
     static bool init_done = false;
     if(!init_done){

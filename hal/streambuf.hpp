@@ -2,6 +2,8 @@
 
 #include "../target/target.hpp"
 
+#include <cstddef>
+
 namespace hwstl {
     template <size_t t_buffer_len>
     class buffer_size {
