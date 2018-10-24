@@ -1,7 +1,6 @@
-#include "target/target.hpp"
+#include "hwstl.hpp"
 
-
-int main(void)
+/**int main(void)
 {
 	SystemInit();
 
@@ -35,4 +34,24 @@ int main(void)
 	hwstl::cout << "Floating:\n";
 	hwstl::cout << static_cast<float>(234.123);
 	hwstl::cout << hwstl::endl << hwstl::endl;
+}**/
+
+void hwstl::main() {
+	// hwstl::target::uart_io::Configure();
+
+	auto [ d7, d0, d13 ] = hwstl::make_opin(
+		hwstl::target::pin::d7,
+		hwstl::target::pin::d0,
+		hwstl::target::pin::d13
+	);
+
+	while (true) {
+		d13.set(0);
+		hwstl::wait_ms(1000);
+		d13.set(1);
+		hwstl::wait_ms(1000);
+	}
+
+	//(void) d7;
+	//(void) d0;
 }

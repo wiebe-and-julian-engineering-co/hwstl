@@ -1,11 +1,156 @@
 #pragma once
 
-#include <sam.h>
-
-using size_t = uint32_t;
+#include <system_sam3xa.h>
+#include <sam3x8e.h>
+#include <tuple>
+#include <utility>
+#include <algorithm>
 
 namespace hwstl {
+    using pin_index = uint32_t;
+
+    template <pin_index... vt_pins>
+    using pin_sequence = std::integer_sequence<pin_index, vt_pins...>;
+
     namespace arduino_due {
+        namespace internal {
+
+        };
+
+        void init();
+
+        namespace pin {
+            class pin_info {
+            public:
+                uint8_t m_port;
+                uint8_t m_pin;
+
+                constexpr pin_info(uint8_t port, uint8_t pin) : m_port(port), m_pin(pin) { }
+            };
+
+            static constexpr pin_info pin_info_array[21] = {
+                { 0,  8 },  // d0
+                { 0,  9 },  // d1
+                { 1, 25 },  // d2
+                { 2, 28 },  // d3
+                { 2, 26 },  // d4
+                { 2, 25 },  // d5
+                { 2, 24 },  // d6
+                { 2, 23 },  // d7
+                { 2, 22 },  // d8
+                { 2, 21 },  // d9
+                { 2, 29 },  // d10
+
+                { 3,  7 },  // d11
+                { 3,  8 },  // d12
+                { 1, 27 },  // d13
+                { 3,  4 },  // d14
+                { 3,  5 },  // d15
+                { 0, 13 },  // d16
+                { 0, 12 },  // d17
+                { 0, 11 },  // d18
+                { 0, 10 },  // d19
+                { 1, 12 },  // d20
+            };
+
+            template <pin_index t_pin>
+            __attribute__((always_inline))
+            static inline constexpr Pio* GetPortByPin() {
+                uint8_t port = pin_info_array[t_pin].m_port;
+
+                if (port == 0) {
+                    return PIOA;
+                } else if (port == 1) {
+                    return PIOB;
+                } else if (port == 2) {
+                    return PIOC;
+                } else if (port == 3) {
+                    return PIOD;
+                } else {
+                    return nullptr;
+                }
+            }
+
+            template <pin_index t_pin>
+            __attribute__((always_inline))
+            static inline constexpr uint32_t GetPinInPort() {
+                return pin_info_array[t_pin].m_pin;
+            }
+
+            template <pin_index t_pin>
+            __attribute__((always_inline))
+            static inline int PinEnable() {
+                Pio* port = GetPortByPin<t_pin>();
+                uint32_t mask = 1 << GetPinInPort<t_pin>();
+
+                // port->PIO_WPMR = (0x50494F << 8) | 1;
+                port->PIO_PER = mask;
+                port->PIO_OER = mask;
+                // port->PIO_WPMR = (0x50494F << 8) | 0;
+
+                return 1;
+            }
+
+            template <pin_index... vt_pins>
+            __attribute__((always_inline))
+            static inline void PinSequenceEnable(pin_sequence<vt_pins...> pins) {
+                (PinEnable<vt_pins>(), ...);
+            }
+
+            template <pin_index... vt_pins>
+            __attribute__((always_inline))
+            static inline void configure_in(pin_sequence<vt_pins...> pins) {
+                PMC->PMC_PCER0 = (0b111111 << 11); // enable all gpio ports, room for optimisation based on pins
+
+                // PinSequenceEnable(pins);
+            }
+
+            template <pin_index... vt_pins>
+            __attribute__((always_inline))
+            static inline void configure_out(pin_sequence<vt_pins...> pins) {
+                PMC->PMC_PCER0 = (0b111111 << 11); // enable all gpio ports, room for optimisation based on pins
+
+                PinSequenceEnable(pins);
+            }
+
+            template <pin_index... vt_pins>
+            __attribute__((always_inline))
+            static inline void configure_inout(pin_sequence<vt_pins...> pins) {
+                PMC->PMC_PCER0 = (0b111111 << 11); // enable all gpio ports, room for optimisation based on pins
+
+                // PinSequenceEnable(pins);
+            }
+
+            template <pin_index t_pin>
+            class pin_impl {
+            public:
+                static constexpr pin_index pin = t_pin;
+
+                constexpr pin_impl() { }
+
+                static inline void set(bool v) {
+                    Pio* port = GetPortByPin<t_pin>();
+                    uint32_t mask = 1 << GetPinInPort<t_pin>();
+
+                    (v ? port->PIO_SODR : port->PIO_CODR) = mask;
+                }
+
+                static inline bool get() {
+                    Pio* port = GetPortByPin<t_pin>();
+                    uint32_t mask = 1 << GetPinInPort<t_pin>();
+
+                    return (port->PIO_PDSR & mask) != 0;
+                }
+            };
+
+#ifdef HWSTL_ONCE
+            auto d0 = pin_impl<0>();
+            auto d1 = pin_impl<1>();
+            auto d2 = pin_impl<2>();
+            auto d7 = pin_impl<7>();
+#endif
+        };
+
         /**
          * @brief Primary UART controller
          * 
