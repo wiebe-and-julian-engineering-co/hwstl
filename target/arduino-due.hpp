@@ -77,6 +77,12 @@ namespace hwstl {
                 return pin_info_array[t_pin].m_pin;
             }
 
+			template <pin_index t_pin>
+			__attribute__((always_inline))
+			static inline constexpr uint32_t GetPinMask() {
+				return 1 << GetPinInPort<t_pin>();
+			}
+
             template <pin_index t_pin>
             __attribute__((always_inline))
             static inline int PinEnable() {
@@ -130,14 +136,14 @@ namespace hwstl {
 
                 static inline void set(bool v) {
                     Pio* port = GetPortByPin<t_pin>();
-                    uint32_t mask = 1 << GetPinInPort<t_pin>();
+                    uint32_t mask = GetPinMask<t_pin>();
 
                     (v ? port->PIO_SODR : port->PIO_CODR) = mask;
                 }
 
                 static inline bool get() {
                     Pio* port = GetPortByPin<t_pin>();
-                    uint32_t mask = 1 << GetPinInPort<t_pin>();
+                    uint32_t mask = GetPinMask<t_pin>();
 
                     return (port->PIO_PDSR & mask) != 0;
                 }
