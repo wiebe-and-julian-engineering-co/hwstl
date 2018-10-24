@@ -89,10 +89,8 @@ namespace hwstl {
                 Pio* port = GetPortByPin<t_pin>();
                 uint32_t mask = 1 << GetPinInPort<t_pin>();
 
-                // port->PIO_WPMR = (0x50494F << 8) | 1;
                 port->PIO_PER = mask;
                 port->PIO_OER = mask;
-                // port->PIO_WPMR = (0x50494F << 8) | 0;
 
                 return 1;
             }

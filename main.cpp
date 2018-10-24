@@ -37,19 +37,28 @@
 }**/
 
 void hwstl::main() {
-	// hwstl::target::uart_io::Configure();
+	hwstl::target::uart_io::Configure();
 
-	auto [ d7, d0, d13 ] = hwstl::make_opin(
-		hwstl::target::pin::d7,
-		hwstl::target::pin::d0,
+	auto [d13] = hwstl::make_opin(
 		hwstl::target::pin::d13
+	);
+	
+	auto [d7] = hwstl::make_ipin(
+		hwstl::target::pin::d7
 	);
 
 	while (true) {
-		d13.set(0);
+		/**d13.set(0);
+		hwstl::cout << "ON" << hwstl::endl;
 		hwstl::wait_ms(1000);
 		d13.set(1);
-		hwstl::wait_ms(1000);
+		hwstl::cout << "OFF" << hwstl::endl;
+		hwstl::wait_ms(1000);**/
+
+		if (!d7.get()) {
+			hwstl::cout << "PRESSED!" << hwstl::endl;
+			hwstl::wait_ms(50);
+		}
 	}
 
 	//(void) d7;
