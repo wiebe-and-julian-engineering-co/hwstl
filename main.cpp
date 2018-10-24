@@ -1,12 +1,15 @@
 #include "hwstl.hpp"
 
-/**int main(void)
-{
-	SystemInit();
-
-	// TODO: Disable watchdog timer.
+void hwstl::main() {
 	hwstl::target::uart_io::Configure();
-	hwstl::wait_ms(1000);
+
+	auto [d13] = hwstl::make_opin(
+		hwstl::target::pin::d13
+	);
+	
+	auto [d7] = hwstl::make_ipin(
+		hwstl::target::pin::d7
+	);
 
 	hwstl::cout << "Hello World!\n";
 	hwstl::cout << hwstl::endl;
@@ -28,24 +31,14 @@
 	hwstl::cout << hwstl::endl;
 
 	hwstl::cout << "Short:\n";
-	hwstl::cout << static_cast<unsigned short>(12345);
+	hwstl::cout << static_cast<signed short>(-12345);
 	hwstl::cout << hwstl::endl;
 
 	hwstl::cout << "Floating:\n";
 	hwstl::cout << static_cast<float>(234.123);
 	hwstl::cout << hwstl::endl << hwstl::endl;
-}**/
 
-void hwstl::main() {
-	hwstl::target::uart_io::Configure();
-
-	auto [d13] = hwstl::make_opin(
-		hwstl::target::pin::d13
-	);
-	
-	auto [d7] = hwstl::make_ipin(
-		hwstl::target::pin::d7
-	);
+	hwstl:wait_ms(100);
 
 	while (true) {
 		/**d13.set(0);
@@ -60,7 +53,4 @@ void hwstl::main() {
 			hwstl::wait_ms(50);
 		}
 	}
-
-	//(void) d7;
-	//(void) d0;
 }
