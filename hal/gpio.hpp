@@ -9,6 +9,14 @@ namespace hwstl {
         bool get() {
             return hwstl::target::pin::pin_impl<t_pin>::get();
         }
+
+		void enable_pullup() {
+			hwstl::target::pin::pin_impl<t_pin>::enable_pullup();
+		}
+
+		void disable_pullup() {
+			hwstl::target::pin::pin_impl<t_pin>::enable_pullup();
+		}
     };
 
     template <hwstl::pin_index t_pin>

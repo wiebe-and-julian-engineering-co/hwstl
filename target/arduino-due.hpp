@@ -145,6 +145,20 @@ namespace hwstl {
 
                     return (port->PIO_PDSR & mask) != 0;
                 }
+
+				static inline void enable_pullup() {
+					Pio* port = GetPortByPin<t_pin>();
+					uint32_t mask = GetPinMask<t_pin>();
+					
+					port->PIO_PUER = mask;	
+				}
+
+				static inline void disable_pullup() {
+					Pio* port = GetPortByPin<t_pin>();
+					uint32_t mask = GetPinMask<t_pin>();
+					
+					port->PIO_PUDR = mask;
+				}
             };
 
 #ifdef HWSTL_ONCE

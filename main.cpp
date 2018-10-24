@@ -11,6 +11,8 @@ void hwstl::main() {
 		hwstl::target::pin::d7
 	);
 
+	d7.disable_pullup();
+
 	hwstl::cout << "Hello World!\n";
 	hwstl::cout << hwstl::endl;
 
@@ -38,7 +40,7 @@ void hwstl::main() {
 	hwstl::cout << static_cast<float>(234.123);
 	hwstl::cout << hwstl::endl << hwstl::endl;
 
-	hwstl:wait_ms(100);
+	hwstl::wait_ms(100);
 
 	while (true) {
 		/**d13.set(0);
