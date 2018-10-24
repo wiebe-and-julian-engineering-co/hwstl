@@ -148,6 +148,7 @@ namespace hwstl {
             auto d1 = pin_impl<1>();
             auto d2 = pin_impl<2>();
             auto d7 = pin_impl<7>();
+			auto d13 = pin_impl<13>();
 #endif
         };
 
