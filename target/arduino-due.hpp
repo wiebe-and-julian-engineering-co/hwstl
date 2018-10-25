@@ -77,11 +77,11 @@ namespace hwstl {
                 return pin_info_array[t_pin].m_pin;
             }
 
-			template <pin_index t_pin>
-			__attribute__((always_inline))
-			static inline constexpr uint32_t GetPinMask() {
-				return 1 << GetPinInPort<t_pin>();
-			}
+            template <pin_index t_pin>
+            __attribute__((always_inline))
+            static inline constexpr uint32_t GetPinMask() {
+                return 1 << GetPinInPort<t_pin>();
+            }
 
             template <pin_index t_pin>
             __attribute__((always_inline))
@@ -146,19 +146,19 @@ namespace hwstl {
                     return (port->PIO_PDSR & mask) != 0;
                 }
 
-				static inline void enable_pullup() {
-					Pio* port = GetPortByPin<t_pin>();
-					uint32_t mask = GetPinMask<t_pin>();
-					
-					port->PIO_PUER = mask;	
-				}
+                static inline void enable_pullup() {
+                    Pio* port = GetPortByPin<t_pin>();
+                    uint32_t mask = GetPinMask<t_pin>();
+                    
+                    port->PIO_PUER = mask;	
+                }
 
-				static inline void disable_pullup() {
-					Pio* port = GetPortByPin<t_pin>();
-					uint32_t mask = GetPinMask<t_pin>();
-					
-					port->PIO_PUDR = mask;
-				}
+                static inline void disable_pullup() {
+                    Pio* port = GetPortByPin<t_pin>();
+                    uint32_t mask = GetPinMask<t_pin>();
+                    
+                    port->PIO_PUDR = mask;
+                }
             };
 
 #ifdef HWSTL_ONCE
@@ -166,7 +166,7 @@ namespace hwstl {
             auto d1 = pin_impl<1>();
             auto d2 = pin_impl<2>();
             auto d7 = pin_impl<7>();
-			auto d13 = pin_impl<13>();
+            auto d13 = pin_impl<13>();
 #endif
         };
 
