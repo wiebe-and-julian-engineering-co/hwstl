@@ -95,10 +95,48 @@ namespace hwstl {
                 return 1;
             }
 
+            template <pin_index t_pin>
+            __attribute__((always_inline))
+            static inline constexpr void ProcessPinEntry(uint32_t masks[4]) {
+                uint8_t port = pin_info_array[t_pin].m_port;
+
+                if (port == 0) {
+                    masks[0] |= GetPinMask<t_pin>(); 
+                } else if (port == 1) {
+                    masks[1] |= GetPinMask<t_pin>(); 
+                } else if (port == 2) {
+                    masks[2] |= GetPinMask<t_pin>();
+                } else if (port == 3) {
+                    masks[3] |= GetPinMask<t_pin>();
+                }
+            }
+
             template <pin_index... vt_pins>
             __attribute__((always_inline))
             static inline void PinSequenceEnable(pin_sequence<vt_pins...> pins) {
-                (PinEnable<vt_pins>(), ...);
+                uint32_t masks[4] = {};
+
+                (ProcessPinEntry<vt_pins>(masks), ...);
+
+                if (masks[0]) {
+                    PIOA->PIO_PER = masks[0];
+                    PIOA->PIO_OER = masks[0];
+                }
+
+                if (masks[1]) {
+                    PIOB->PIO_PER = masks[1];
+                    PIOB->PIO_OER = masks[1];
+                }
+                
+                if (masks[2]) {
+                    PIOC->PIO_PER = masks[2];
+                    PIOC->PIO_OER = masks[2];
+                }
+
+                if (masks[3]) {
+                    PIOD->PIO_PER = masks[3];
+                    PIOD->PIO_OER = masks[3];
+                }
             }
 
             template <pin_index... vt_pins>
