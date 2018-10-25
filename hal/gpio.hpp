@@ -15,7 +15,7 @@ namespace hwstl {
         }
 
         void disable_pullup() {
-            hwstl::target::pin::pin_impl<t_pin>::enable_pullup();
+            hwstl::target::pin::pin_impl<t_pin>::disable_pullup();
         }
     };
 
@@ -32,7 +32,7 @@ namespace hwstl {
 
     template <hwstl::pin_index... vt_pins>
     auto make_ipin(hwstl::target::pin::pin_impl<vt_pins>... opins) {
-        // hwstl::target::pin::configure_in(hwstl::pin_sequence<vt_pins...>());
+        hwstl::target::pin::configure_in(hwstl::pin_sequence<vt_pins...>());
 
         return std::tuple(
             hwstl::ipin<vt_pins>()...

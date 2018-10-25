@@ -114,53 +114,58 @@ namespace hwstl {
             template <pin_index... vt_pins>
             __attribute__((always_inline))
             static inline void PinSequenceEnable(pin_sequence<vt_pins...> pins) {
-                uint32_t masks[4] = {};
+                uint32_t masks[4]   = {};
+                uint32_t pmc0_enable = 0;
 
                 (ProcessPinEntry<vt_pins>(masks), ...);
 
                 if (masks[0]) {
+                    pmc0_enable   |= (1 << 11);
+
                     PIOA->PIO_PER = masks[0];
                     PIOA->PIO_OER = masks[0];
                 }
 
                 if (masks[1]) {
+                    pmc0_enable   |= (1 << 12);
+
                     PIOB->PIO_PER = masks[1];
                     PIOB->PIO_OER = masks[1];
                 }
                 
                 if (masks[2]) {
+                    pmc0_enable   |= (1 << 13);
+
                     PIOC->PIO_PER = masks[2];
                     PIOC->PIO_OER = masks[2];
                 }
 
                 if (masks[3]) {
+                    pmc0_enable   |= (1 << 14);
+
                     PIOD->PIO_PER = masks[3];
                     PIOD->PIO_OER = masks[3];
                 }
+
+                PMC->PMC_PCER0 = pmc0_enable;
             }
 
             template <pin_index... vt_pins>
             __attribute__((always_inline))
             static inline void configure_in(pin_sequence<vt_pins...> pins) {
-                PMC->PMC_PCER0 = (0b111111 << 11); // enable all gpio ports, room for optimisation based on pins
-
-                // PinSequenceEnable(pins);
+                PinSequenceEnable(pins);
             }
 
             template <pin_index... vt_pins>
             __attribute__((always_inline))
             static inline void configure_out(pin_sequence<vt_pins...> pins) {
-                PMC->PMC_PCER0 = (0b111111 << 11); // enable all gpio ports, room for optimisation based on pins
-
                 PinSequenceEnable(pins);
             }
 
             template <pin_index... vt_pins>
             __attribute__((always_inline))
             static inline void configure_inout(pin_sequence<vt_pins...> pins) {
-                PMC->PMC_PCER0 = (0b111111 << 11); // enable all gpio ports, room for optimisation based on pins
-
-                // PinSequenceEnable(pins);
+                PinSequenceEnable(pins);
             }
 
             template <pin_index t_pin>
