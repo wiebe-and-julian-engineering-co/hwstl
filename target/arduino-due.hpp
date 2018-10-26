@@ -265,8 +265,7 @@ namespace hwstl {
             public:
                 unsigned charLength : 3;
 
-                constexpr CharacterLength() : charLength(5) { }
-                constexpr CharacterLength(uint8_t charLength) : charLength(charLength) { }
+                constexpr CharacterLength(uint8_t charLength = 5) : charLength(charLength) { }
             };
 
             static constexpr int32_t GetCharacterLength(uint32_t bits) {
@@ -343,7 +342,8 @@ namespace hwstl {
             };
 
             enum class SuccessiveNACK {
-                // TODO, see datasheet USART DSNACK
+                Enabled = 0,
+                Disable = 1
             };
 
             enum class InvertedData {
@@ -359,8 +359,8 @@ namespace hwstl {
             class MaxIterations {
             public:
                 unsigned maxIterations : 3;
-
-                constexpr MaxIterations(uint8_t maxIterations) : maxIterations(maxIterations) { }
+ 
+                constexpr MaxIterations(uint8_t maxIterations = 0) : maxIterations(maxIterations) { }
             };
 
             enum class InfraredRxFilter {
@@ -383,16 +383,17 @@ namespace hwstl {
                 OneBit = 1
             };
 
-            template <class t_type, t_type t_uart>
+            template <class t_type>
             class Mode;
 
-            template <Uart* t_uart>
-            class Mode<Uart*, t_uart> {
+            /**
+             * @brief Mode descriptor for UART peripherals 
+             */
+            template <>
+            class Mode<Uart*> {
             public:
                 Parity parity;
                 Channel channel;
-
-                constexpr Mode() { }
 
                 constexpr Mode(
                     Parity parity = Parity::Even,
@@ -403,8 +404,11 @@ namespace hwstl {
                 { }
             };
 
-            template <Usart* t_usart>
-            class Mode<Usart*, t_usart> {
+            /**
+             * @brief Mode descriptor for USART peripherals
+             */
+            template <>
+            class Mode<Usart*> {
             public:
                 USARTMode mode;
                 ClockSelection clockSelection;
@@ -442,7 +446,7 @@ namespace hwstl {
                     ClockOutput clockOutput = ClockOutput::NotDriven,
                     OversamplingMode oversamplingMode = OversamplingMode::x16,
                     InhibitNonAcknowledge inhibitNonAcknowledge = InhibitNonAcknowledge::Generated,
-                    SuccessiveNACK successiveNACK = 0,
+                    SuccessiveNACK successiveNACK = SuccessiveNACK::Enabled,
                     InvertedData invertedData = InvertedData::ActiveHigh,
                     VariableSynchronization variableSynchronization = VariableSynchronization::UserDefined,
                     MaxIterations maxIterations = MaxIterations(),
@@ -468,6 +472,7 @@ namespace hwstl {
                     invertedData(invertedData),
                     variableSynchronization(variableSynchronization),
                     maxIterations(maxIterations),
+                    infraredRxFilter(infraredRxFilter),
                     manchesterCodecEnabled(manchesterCodecEnabled),
                     manchesterSynchronizationMode(manchesterSynchronizationMode),
                     startFrameDelimiter(startFrameDelimiter)
