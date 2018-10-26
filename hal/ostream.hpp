@@ -2,7 +2,6 @@
 
 #include "streambuf.hpp"
 #include "../target/type_definition.hpp"
-#include <cmath>
 
 namespace hwstl {
     template <class t_io>
