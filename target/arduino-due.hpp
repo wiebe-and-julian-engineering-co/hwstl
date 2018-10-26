@@ -242,6 +242,238 @@ namespace hwstl {
         static constexpr uint32_t MainClockFrequency = 84000000;
 
         namespace uart_util {
+            enum class USARTMode {
+                Normal = 0,
+                RS485,
+                HardwareHandshaking,
+                ISO7816_T_0 = 4,
+                ISO7816_T_1 = 6,
+                IrDA = 8,
+                LinMaster = 0xA,
+                LinSlave,
+                SPIMaster = 0xE,
+                SPISlave
+            };
+
+            enum class ClockSelection {
+                MasterClock = 0,
+                Divided,
+                SerialClock = 3
+            };
+
+            class CharacterLength {
+            public:
+                unsigned charLength : 3;
+
+                constexpr CharacterLength() : charLength(5) { }
+                constexpr CharacterLength(uint8_t charLength) : charLength(charLength) { }
+            };
+
+            static constexpr int32_t GetCharacterLength(uint32_t bits) {
+                if (bits == 5) {
+                    return 0;
+                } else if (bits == 6) {
+                    return 1;
+                } else if (bits == 7) {
+                    return 2;
+                } else if (bits == 8) {
+                    return 3;
+                } else if (bits == 9) {
+                    return 4; // THIS CASE SHOULD BE HANDLED DIFFERENTLY, SEE DATASHEET FOR USART "MODE9"
+                }
+
+                return -1;
+            }
+
+            enum class SynchronousMode {
+                Async = 0,
+                Sync = 1
+            };
+
+            enum class SPIClockPhase {
+                // Needs more elaboration, and perhals a more descriptive enum
+                LeadingEdgeChanged_FollowingEdgeCaptured = 0,
+                LeadingEdgeCaptured_FollowingEdgeChanged = 1
+            };
+
+            enum class Parity {
+                Even = 0,
+                Odd,
+                Space,
+                Mark,
+                No
+            };
+
+            enum class StopBits {
+                OneBit = 0,
+                OneAndHalfBits,
+                TwoBits
+            };
+
+            enum class Channel {
+                Normal = 0,
+                Automatic,
+                LocalLoopback,
+                RemoteLoopback
+            };
+
+            enum class BitOrder {
+                LeastSignificantFirst = 0,
+                MostSignificantFirst = 1
+            };
+
+            enum class SPIClockPolarity {
+                ActiveHigh = 0,
+                ActiveLow = 1
+            };
+
+            enum class ClockOutput {
+                NotDriven = 0,
+                Driven = 1
+            };
+
+            enum class OversamplingMode {
+                x16 = 0,
+                x8 = 1
+            };
+
+            enum class InhibitNonAcknowledge {
+                Generated = 0,
+                NotGenerated = 1
+            };
+
+            enum class SuccessiveNACK {
+                // TODO, see datasheet USART DSNACK
+            };
+
+            enum class InvertedData {
+                ActiveHigh = 0,
+                ActiveLow = 1
+            };
+
+            enum class VariableSynchronization {
+                UserDefined = 0,
+                OnReceived = 1
+            };
+
+            class MaxIterations {
+            public:
+                unsigned maxIterations : 3;
+
+                constexpr MaxIterations(uint8_t maxIterations) : maxIterations(maxIterations) { }
+            };
+
+            enum class InfraredRxFilter {
+                None = 0,
+                ThreeSampleFilter = 1
+            };
+
+            enum class ManchesterCodecEnabled {
+                Disabled = 0,
+                Enabled = 1
+            };
+
+            enum class ManchesterSynchronizationMode {
+                LowToHighTransition = 0,
+                HighToLowTransition = 1
+            };
+
+            enum class StartFrameDelimiter {
+                CommandOrDataSync = 0,
+                OneBit = 1
+            };
+
+            template <class t_type, t_type t_uart>
+            class Mode;
+
+            template <Uart* t_uart>
+            class Mode<Uart*, t_uart> {
+            public:
+                Parity parity;
+                Channel channel;
+
+                constexpr Mode() { }
+
+                constexpr Mode(
+                    Parity parity = Parity::Even,
+                    Channel channel = Channel::Normal
+                ) : 
+                    parity(parity),
+                    channel(channel)
+                { }
+            };
+
+            template <Usart* t_usart>
+            class Mode<Usart*, t_usart> {
+            public:
+                USARTMode mode;
+                ClockSelection clockSelection;
+                CharacterLength characterLength;
+                SynchronousMode synchronousMode;
+                SPIClockPhase spiClockPhase;
+                Parity parity;
+                StopBits stopBits;
+                Channel channel;
+                BitOrder bitOrder;
+                SPIClockPolarity spiClockPolarity;
+                ClockOutput clockOutput;
+                OversamplingMode oversamplingMode;
+                InhibitNonAcknowledge inhibitNonAcknowledge;
+                SuccessiveNACK successiveNACK;
+                InvertedData invertedData;
+                VariableSynchronization variableSynchronization;
+                MaxIterations maxIterations;
+                InfraredRxFilter infraredRxFilter;
+                ManchesterCodecEnabled manchesterCodecEnabled;
+                ManchesterSynchronizationMode manchesterSynchronizationMode;
+                StartFrameDelimiter startFrameDelimiter;
+
+                constexpr Mode(
+                    USARTMode mode = USARTMode::Normal,
+                    ClockSelection clockSelection = ClockSelection::MasterClock,
+                    CharacterLength characterLength = CharacterLength(),
+                    SynchronousMode synchronousMode = SynchronousMode::Async,
+                    SPIClockPhase spiClockPhase = SPIClockPhase::LeadingEdgeChanged_FollowingEdgeCaptured,
+                    Parity parity = Parity::Even,
+                    StopBits stopBits = StopBits::OneBit,
+                    Channel channel = Channel::Normal,
+                    BitOrder bitOrder = BitOrder::LeastSignificantFirst,
+                    SPIClockPolarity spiClockPolarity = SPIClockPolarity::ActiveHigh,
+                    ClockOutput clockOutput = ClockOutput::NotDriven,
+                    OversamplingMode oversamplingMode = OversamplingMode::x16,
+                    InhibitNonAcknowledge inhibitNonAcknowledge = InhibitNonAcknowledge::Generated,
+                    SuccessiveNACK successiveNACK = 0,
+                    InvertedData invertedData = InvertedData::ActiveHigh,
+                    VariableSynchronization variableSynchronization = VariableSynchronization::UserDefined,
+                    MaxIterations maxIterations = MaxIterations(),
+                    InfraredRxFilter infraredRxFilter = InfraredRxFilter::None,
+                    ManchesterCodecEnabled manchesterCodecEnabled = ManchesterCodecEnabled::Disabled,
+                    ManchesterSynchronizationMode manchesterSynchronizationMode = ManchesterSynchronizationMode::LowToHighTransition,
+                    StartFrameDelimiter startFrameDelimiter = StartFrameDelimiter::CommandOrDataSync
+                ) :
+                    mode(mode),
+                    clockSelection(clockSelection),
+                    characterLength(characterLength),
+                    synchronousMode(synchronousMode),
+                    spiClockPhase(spiClockPhase),
+                    parity(parity),
+                    stopBits(stopBits),
+                    channel(channel),
+                    bitOrder(bitOrder),
+                    spiClockPolarity(spiClockPolarity),
+                    clockOutput(clockOutput),
+                    oversamplingMode(oversamplingMode),
+                    inhibitNonAcknowledge(inhibitNonAcknowledge),
+                    successiveNACK(successiveNACK),
+                    invertedData(invertedData),
+                    variableSynchronization(variableSynchronization),
+                    maxIterations(maxIterations),
+                    manchesterCodecEnabled(manchesterCodecEnabled),
+                    manchesterSynchronizationMode(manchesterSynchronizationMode),
+                    startFrameDelimiter(startFrameDelimiter)
+                { }
+            };
+
             static constexpr int32_t FromFrequencyToPrescalerSelector(uint32_t main_clock_frequency) {
                 // 0 CLK Selected clock
                 // 1 CLK_2 Selected clock divided by 2
