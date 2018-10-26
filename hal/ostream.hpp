@@ -2,6 +2,7 @@
 
 #include "streambuf.hpp"
 #include "../target/type_definition.hpp"
+#include <cmath>
 
 namespace hwstl {
     template <class t_io>
@@ -103,7 +104,7 @@ namespace hwstl {
         }
 
         ostream& operator<< (float val) {
-            print_floating(val);
+            print_floating(val, 7);
             
             // TODO: Unimplemented
             return *this;
@@ -129,12 +130,6 @@ namespace hwstl {
 
             return *this;
         }
-
-        // template <class t_type>
-        // ostream& operator<< (const t_type& val) {
-        //     // TODO: Unimplemented
-        //     return *this;
-        // }
 
         ///< Stream buffers (2)	
         ostream& operator<< (streambuf* sb) {
@@ -181,34 +176,47 @@ namespace hwstl {
         }
 
         inline void print_bool(const bool b) {
-            if (b) {
-                *this << "true";
-            } else {
-                *this << "false";
-            }
+            *this << (b) ? "true" : "false";
         }
 
         template <class t>
-        inline void print_floating(t val) {
-            t floored = 0;
-            floor(val, floored);
-            val = static_cast<t>(val - floored);
+        inline void print_floating(t val, uint8_t digits) {  
+            // Handle negative numbers
+            if (val < 0.0)
+            {
+                *this << '-';
+                //rev.add_char('-');
+                val = -val;
+            }
 
-            // Explicit signed or unsigned notation is favoured, needs further testing...
-            print_base(static_cast<long>(floored));
-            *this << '.';
-            *this << "FRACTIONAL"; // PRECISION IS CURRENTLY UNSUPPORTED!
-            //print_dec(static_cast<long>(val));
-        }
+            // Round correctly so that print(1.999, 2) prints as "2.00"
+            double rounding = 0.5;
+            for (uint8_t i=0; i < digits; ++i)
+                rounding /= 10.0;
+  
+            val += rounding;
 
-        template <class t, class t_ret>
-        inline void floor(const t val, t_ret &ret_val) {
-            if (val > 0) {
-                ret_val = static_cast<t_ret>(val);
-            } else {
-                ret_val = static_cast<t_ret>(val - static_cast<t>(0.9999999999999999));
+            // Extract the integer part of the number and print it
+            unsigned long int_part = static_cast<unsigned long>(val);
+            double remainder = val - static_cast<double>(int_part);
+
+            print_base(int_part);
+
+            // Print the decimal point, but only if there are digits beyond
+            if (digits > 0) {
+                *this << '.';
+
+                // Extract digits from the remainder one at a time
+                while (digits-- > 0)
+                {
+                    remainder *= 10.0;
+                    unsigned int toPrint = (unsigned int)(remainder);
+                    print_base(toPrint);
+                    remainder -= toPrint;
+                }
             }
         }
+
 
         struct reverse_stream {
             static constexpr uint_fast16_t length = 70; // May be changed using template metaprogramming.-
