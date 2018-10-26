@@ -1,6 +1,7 @@
 #pragma once
 
 #include "streambuf.hpp"
+#include "../target/type_definition.hpp"
 
 namespace hwstl {
     template <class t_io>
@@ -29,6 +30,7 @@ namespace hwstl {
         // ostream& operator<< (ios_base& (*pf)(ios_base&));
 
     public:
+
         ostream& operator<< (const char* ptr) {
             while (*ptr != '\0') {
                 t_io::putc(*ptr++);
@@ -53,49 +55,49 @@ namespace hwstl {
         }
 
         ostream& operator<< (signed short val) {
-            print_dec(val);
+            print_base(val);
 
             return *this;
         }
 
         ostream& operator<< (unsigned short val) {
-            print_dec(val);
+            print_base(val);
 
             return *this;
         }
 
         ostream& operator<< (signed int val) {
-            print_dec(val);
+            print_base(val);
 
             return *this;
         }
 
         ostream& operator<< (unsigned int val) {
-            print_dec(val);
+            print_base(val);
 
             return *this;
         }
 
         ostream& operator<< (signed long val) {
-            print_dec(val);
+            print_base(val);
 
             return *this;
         }
 
         ostream& operator<< (unsigned long val) {
-            print_dec(val);
+            print_base(val);
 
             return *this;
         }
 
         ostream& operator<< (signed long long val) {
-            print_dec(val);
+            print_base(val);
 
             return *this;
         }
 
         ostream& operator<< (unsigned long long val) {
-            print_dec(val);
+            print_base(val);
 
             return *this;
         }
@@ -141,31 +143,39 @@ namespace hwstl {
         }
 
         ///< Manipulators (3)
-        ostream& operator<< (ostream& (*pf)(ostream&)) {
+        /**ostream& operator<< (ostream& (*pf)(ostream&)) {
             // TODO: Unimplemented
             return pf(*this);
+        }**/
+
+        ostream& operator<< (hwstl::data_types data_type) {
+            base = get_pure_data_type(data_type);
+
+            return *this;
         }
 
-    private:
+    private:    
+        hwstl::pure_data_type base = hwstl::get_pure_data_type(hwstl::dec);
+
         template <class t>
-        inline void print_dec(t val) {
+        inline void print_base(t val) {
+            reverse_stream rev;
+
             if (val < 0) {
                 *this << '-';
                 val *= -1;
             } else if (val == 0) {
-                *this << '0';
+                rev.add_digit(0, 'A');
                 return;
             }
-
-            reverse_stream rev;
             
-            while (val) {
-                //*this << static_cast<unsigned char>((val % 10) + '0');
+            while (val > 0) {
+                rev.add_digit(val % base.m_base, 'A');
 
-                rev.add_digit(val % 10, 'A');
-
-                val /= 10;
+                val /= base.m_base;
             }
+
+             rev.add_prefix(base.m_type);
 
             *this << rev.content;
         }
@@ -185,7 +195,7 @@ namespace hwstl {
             val = static_cast<t>(val - floored);
 
             // Explicit signed or unsigned notation is favoured, needs further testing...
-            print_dec(static_cast<long>(floored));
+            print_base(static_cast<long>(floored));
             *this << '.';
             *this << "FRACTIONAL"; // PRECISION IS CURRENTLY UNSUPPORTED!
             //print_dec(static_cast<long>(val));
@@ -193,8 +203,7 @@ namespace hwstl {
 
         template <class t, class t_ret>
         inline void floor(const t val, t_ret &ret_val) {
-
-            if(val>0) {
+            if (val > 0) {
                 ret_val = static_cast<t_ret>(val);
             } else {
                 ret_val = static_cast<t_ret>(val - static_cast<t>(0.9999999999999999));
@@ -210,6 +219,7 @@ namespace hwstl {
                 body[ length - 1 ] = '\0';
                 content = & body[ length - 1 ];
             }
+
             
             void add_char( char c ){
                 content--;
@@ -225,17 +235,17 @@ namespace hwstl {
                 add_char( c );
             }
             
-            void add_prefix( const char base,const ostream & s ){
-                /**if( s.show_base ){
-                    switch( s.numerical_radix ){
-                        case 2  : add_char( 'b' ); break;
-                        case 8  : add_char( 'o' ); break;
-                        case 10 : return;
-                        case 16 : add_char( 'x' ); break;
+            void add_prefix(hwstl::data_types data_type ){
+                //if( s.show_base ){
+                    switch( data_type ){
+                        case hwstl::bin  : add_char( 'b' ); break;
+                        case hwstl::oct  : add_char( 'o' ); break;
+                        case hwstl::dec : return;
+                        case hwstl::hex : add_char( 'x' ); break;
                         default : add_char( '?' ); break;
                     }
                     add_char( '0' );
-                }**/
+                //}
             }
         };
     };
