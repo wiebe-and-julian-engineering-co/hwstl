@@ -239,21 +239,9 @@ namespace hwstl {
             usart2
         };
 
-        template <uart_io t_uart>
-        class uart_impl;
+        static constexpr uint32_t MainClockFrequency = 84000000;
 
-        /**
-         * @brief Primary UART controller
-         * 
-         * @details
-         * Primary UART controller routines. All debug logs should by default
-         * be sent using the routines in this class.
-         */
-        template <>
-        class uart_impl<uart_io::uart> {
-        private:
-            static constexpr uint32_t MainClockFrequency = 84000000;
-
+        namespace uart_util {
             static constexpr int32_t FromFrequencyToPrescalerSelector(uint32_t main_clock_frequency) {
                 // 0 CLK Selected clock
                 // 1 CLK_2 Selected clock divided by 2
@@ -345,11 +333,11 @@ namespace hwstl {
              * @tparam t_master_clock_frequency 
              * @tparam t_baudrate 
              */
-            template <uint32_t t_master_clock_frequency, uint32_t t_baudrate>
-            static inline void EnableBaud() {
+            template <uint32_t t_master_clock_frequency, uint32_t t_baudrate, class t_type>
+            static inline void EnableBaud(t_type uart) {
                 static_assert(FromFrequencyToPrescalerSelector(t_master_clock_frequency) != -1, "Invalid master clock frequency");
                 static_assert(IsValidBaudrate(t_baudrate), "Invalid baudrate");
-                UART->UART_BRGR = CalculateDivider(t_master_clock_frequency, t_baudrate);
+                uart->UART_BRGR = CalculateDivider(t_master_clock_frequency, t_baudrate);
             }
 
             /**
@@ -365,11 +353,11 @@ namespace hwstl {
              * @tparam t_master_clock_frequency 
              * @param baudrate 
              */
-            template <uint32_t t_master_clock_frequency>
-            static inline void EnableBaud(uint32_t baudrate) {
+            template <uint32_t t_master_clock_frequency, class t_type, t_type t_uart>
+            static inline void EnableBaud(t_type uart, uint32_t baudrate) {
                 static_assert(FromFrequencyToPrescalerSelector(t_master_clock_frequency) != -1, "Invalid master clock frequency");
                 debug_assert(IsValidBaudrate(baudrate), "Invalid baudrate");
-                UART->UART_BRGR = CalculateDivider(t_master_clock_frequency, baudrate);
+                t_uart->UART_BRGR = CalculateDivider(t_master_clock_frequency, baudrate);
             }
 
             /**
@@ -383,33 +371,73 @@ namespace hwstl {
              * @param master_clock_frequency 
              * @param baudrate 
              */
-            static inline void EnableBaud(uint32_t master_clock_frequency, uint32_t baudrate) {
+            template <class t_type>
+            static inline void EnableBaud(t_type uart, uint32_t master_clock_frequency, uint32_t baudrate) {
                 debug_assert(FromFrequencyToPrescalerSelector(master_clock_frequency) != -1, "Invalid master clock frequency");
                 debug_assert(IsValidBaudrate(baudrate), "Invalid baudrate");
-                UART->UART_BRGR = CalculateDivider(master_clock_frequency, baudrate);
+                uart->UART_BRGR = CalculateDivider(master_clock_frequency, baudrate);
             }
 
             /**
              * @brief Disable baud generation for UART
              */
-            static inline void DisableBaud() {
+            template <class t_type>
+            static inline void DisableBaud(t_type uart) {
                 // Zero for disabling
-                UART->UART_BRGR = 0;
+                uart->UART_BRGR = 0;
             }
+
+            template <class t_type>
+            static inline void ResetTRX(t_type uart);
 
             /**
              * @brief Resets the UART Tx and Rx
              */
-            static inline void ResetTRX() {
-                UART->UART_CR = UART_CR_RSTRX | UART_CR_RSTTX | UART_CR_RXDIS | UART_CR_TXDIS;
+            template <>
+            void ResetTRX<Uart*>(Uart* uart) {
+                uart->UART_CR = UART_CR_RSTRX | UART_CR_RSTTX | UART_CR_RXDIS | UART_CR_TXDIS;
             }
+
+            /**
+             * @brief Resets the USART Tx and Rx
+             */
+            template <>
+            void ResetTRX<Usart*>(Usart* usart) {
+                usart->US_CR = UART_CR_RSTRX | UART_CR_RSTTX | UART_CR_RXDIS | UART_CR_TXDIS;
+            }
+
+            template <class t_type>
+            static inline void EnableTRX(t_type uart);
 
             /**
              * @brief Enables the UART Tx and Rx
              */
-            static inline void EnableTRX() {
-                UART->UART_CR = UART_CR_RXEN | UART_CR_TXEN; 
+            template <>
+            void EnableTRX<Uart*>(Uart* uart) {
+                uart->UART_CR = UART_CR_RXEN | UART_CR_TXEN; 
             }
+
+            /**
+             * @brief Enables the USART Tx and Rx
+             */
+            template <>
+            void EnableTRX<Usart*>(Usart* usart) {
+                usart->US_CR = UART_CR_RXEN | UART_CR_TXEN;
+            }
+        };
+
+        template <uart_io t_uart>
+        class uart_impl;
+
+        /**
+         * @brief Primary UART controller
+         * 
+         * @details
+         * Primary UART controller routines. All debug logs should by default
+         * be sent using the routines in this class.
+         */
+        template <>
+        class uart_impl<uart_io::uart> {
 
         public:
             static inline void Enable() {
@@ -426,8 +454,8 @@ namespace hwstl {
                 PMC->PMC_PCER0 = 0x01 << ID_UART;
 
                 // Reset and disable receiver and transmitter.
-                ResetTRX();
-                EnableBaud<MainClockFrequency, 115200>();
+                uart_util::ResetTRX(UART);
+                uart_util::EnableBaud<MainClockFrequency, 115200>(UART);
 
                 // No parity, normal channel mode.
                 UART->UART_MR = UART_MR_PAR_NO;
@@ -435,7 +463,7 @@ namespace hwstl {
                 // Disable all interrupts.	  
                 UART->UART_IDR = 0xFFFFFFFF;   
 
-                EnableTRX();
+                uart_util::EnableTRX(UART);
             }
 
             static inline void Disable() {
