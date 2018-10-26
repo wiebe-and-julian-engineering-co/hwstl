@@ -105,17 +105,18 @@ namespace hwstl {
         ostream& operator<< (float val) {
             print_floating(val, 7);
             
-            // TODO: Unimplemented
             return *this;
         }
 
         ostream& operator<< (double val) {
-            // TODO: Unimplemented
+            print_floating(val, 13);
+
             return *this;
         }
 
         ostream& operator<< (long double val) {
-            // TODO: Unimplemented
+            print_floating(val, 13);
+
             return *this;
         }
 
