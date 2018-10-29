@@ -10,8 +10,8 @@
 #include "../hal/gpio.hpp"
 
 namespace hwstl {
-    static auto cout = hwstl::ostream<hwstl::target::uart_impl<hwstl::target::uart_peripheral::uart>>();
-    static auto cin = hwstl::istream<hwstl::target::uart_impl<hwstl::target::uart_peripheral::uart>>();
+    static auto cout = hwstl::ostream<hwstl::target::uart_impl<hwstl::target::uart_port::peripheral::uart>>();
+    static auto cin = hwstl::istream<hwstl::target::uart_impl<hwstl::target::uart_port::peripheral::uart>>();
     static const auto endl = '\n';
     static auto& cerr = cout;
 

@@ -233,668 +233,660 @@ namespace hwstl {
 #endif
         };
 
-        enum class uart_peripheral {
-            uart,
-            usart0,
-            usart1,
-            usart2
-        };
+        class uart_port {
+        public:
+            enum class peripheral {
+                uart,
+                usart0,
+                usart1,
+                usart2
+            };
 
-        enum class uart_type {
-            uart,
-            usart
+            enum class type {
+                uart,
+                usart
+            };
+
+            class peripheral_info {
+            public:
+                type m_type;
+                peripheral m_peripheral;
+            };
+
+            static constexpr peripheral_info uart { type::uart, peripheral::uart };
+            static constexpr peripheral_info usart0 { type::usart, peripheral::usart0 };
+            static constexpr peripheral_info usart1 { type::usart, peripheral::usart1 };
+            static constexpr peripheral_info usart2 { type::usart, peripheral::usart2 };
+
+            constexpr type get_type_of_peripheral(peripheral p) {
+                if (p == peripheral::uart) {
+                    return type::uart;
+                } else if (
+                    p == peripheral::usart0 ||
+                    p == peripheral::usart1 ||
+                    p == peripheral::usart2
+                ) {
+                    return type::usart;
+                }
+            }
         };
 
         static constexpr uint32_t MainClockFrequency = 84000000;
 
-        namespace uart_util {
-            enum class USARTMode {
-                Normal = 0,
-                RS485,
-                HardwareHandshaking,
-                ISO7816_T_0 = 4,
-                ISO7816_T_1 = 6,
-                IrDA = 8,
-                LinMaster = 0xA,
-                LinSlave,
-                SPIMaster = 0xE,
-                SPISlave
-            };
+        enum class USARTMode {
+            Normal = 0,
+            RS485,
+            HardwareHandshaking,
+            ISO7816_T_0 = 4,
+            ISO7816_T_1 = 6,
+            IrDA = 8,
+            LinMaster = 0xA,
+            LinSlave,
+            SPIMaster = 0xE,
+            SPISlave
+        };
 
-            enum class ClockSelection {
-                MasterClock = 0,
-                Divided,
-                SerialClock = 3
-            };
+        enum class ClockSelection {
+            MasterClock = 0,
+            Divided,
+            SerialClock = 3
+        };
 
-            class CharacterLength {
-            public:
-                unsigned charLength : 3;
+        class CharacterLength {
+        public:
+            unsigned charLength : 3;
 
-                constexpr CharacterLength(uint8_t charLength = 5) : charLength(charLength) { }
-            };
+            constexpr CharacterLength(uint8_t charLength = 5) : charLength(charLength) { }
+        };
 
-            static constexpr int32_t GetCharacterLength(uint32_t bits) {
-                if (bits == 5) {
-                    return 0;
-                } else if (bits == 6) {
-                    return 1;
-                } else if (bits == 7) {
-                    return 2;
-                } else if (bits == 8) {
-                    return 3;
-                } else if (bits == 9) {
-                    return 4; // THIS CASE SHOULD BE HANDLED DIFFERENTLY, SEE DATASHEET FOR USART "MODE9"
-                }
-
-                return -1;
+        static constexpr int32_t GetCharacterLength(uint32_t bits) {
+            if (bits == 5) {
+                return 0;
+            } else if (bits == 6) {
+                return 1;
+            } else if (bits == 7) {
+                return 2;
+            } else if (bits == 8) {
+                return 3;
+            } else if (bits == 9) {
+                return 4; // THIS CASE SHOULD BE HANDLED DIFFERENTLY, SEE DATASHEET FOR USART "MODE9"
             }
 
-            enum class SynchronousMode {
-                Async = 0,
-                Sync = 1
-            };
-
-            enum class SPIClockPhase {
-                // Needs more elaboration, and perhals a more descriptive enum
-                LeadingEdgeChanged_FollowingEdgeCaptured = 0,
-                LeadingEdgeCaptured_FollowingEdgeChanged = 1
-            };
-
-            enum class Parity : uint32_t {
-                Even = 0,
-                Odd = 1 << 9,
-                Space = 2 << 9,
-                Mark = 3 << 9,
-                No = 4 << 9,
-                Multidrop = 6 << 9
-            };
-
-            enum class StopBits {
-                OneBit = 0,
-                OneAndHalfBits,
-                TwoBits
-            };
-
-            enum class Channel : uint32_t {
-                Normal = 0,
-                Automatic = 1 << 13,
-                LocalLoopback = 2 << 13,
-                RemoteLoopback = 3 << 13
-            };
-
-            enum class BitOrder {
-                LeastSignificantFirst = 0,
-                MostSignificantFirst = 1
-            };
-
-            enum class SPIClockPolarity {
-                ActiveHigh = 0,
-                ActiveLow = 1
-            };
-
-            enum class ClockOutput {
-                NotDriven = 0,
-                Driven = 1
-            };
-
-            enum class OversamplingMode {
-                x16 = 0,
-                x8 = 1
-            };
-
-            enum class InhibitNonAcknowledge {
-                Generated = 0,
-                NotGenerated = 1
-            };
-
-            enum class SuccessiveNACK {
-                Enabled = 0,
-                Disable = 1
-            };
-
-            enum class InvertedData {
-                ActiveHigh = 0,
-                ActiveLow = 1
-            };
-
-            enum class VariableSynchronization {
-                UserDefined = 0,
-                OnReceived = 1
-            };
-
-            class MaxIterations {
-            public:
-                unsigned maxIterations : 3;
- 
-                constexpr MaxIterations(uint8_t maxIterations = 0) : maxIterations(maxIterations) { }
-            };
-
-            enum class InfraredRxFilter {
-                None = 0,
-                ThreeSampleFilter = 1
-            };
-
-            enum class ManchesterCodecEnabled {
-                Disabled = 0,
-                Enabled = 1
-            };
-
-            enum class ManchesterSynchronizationMode {
-                LowToHighTransition = 0,
-                HighToLowTransition = 1
-            };
-
-            enum class StartFrameDelimiter {
-                CommandOrDataSync = 0,
-                OneBit = 1
-            };
-
-            union GenericMode {
-            public:
-                uint32_t generic;
-                USARTMode mode;
-                ClockSelection clockSelection;
-                CharacterLength characterLength;
-                SynchronousMode synchronousMode;
-                SPIClockPhase spiClockPhase;
-                Parity parity;
-                StopBits stopBits;
-                Channel channel;
-                BitOrder bitOrder;
-                SPIClockPolarity spiClockPolarity;
-                ClockOutput clockOutput;
-                OversamplingMode oversamplingMode;
-                InhibitNonAcknowledge inhibitNonAcknowledge;
-                SuccessiveNACK successiveNACK;
-                InvertedData invertedData;
-                VariableSynchronization variableSynchronization;
-                MaxIterations maxIterations;
-                InfraredRxFilter infraredRxFilter;
-                ManchesterCodecEnabled manchesterCodecEnabled;
-                ManchesterSynchronizationMode manchesterSynchronizationMode;
-                StartFrameDelimiter startFrameDelimiter;
-
-                template <class t_enum>
-                constexpr GenericMode(t_enum mode) : generic(static_cast<uint32_t>(mode)) { }
-
-                template <class T>
-                constexpr operator T() {
-                    return static_cast<T>(generic);
-                }
-            };
-
-            template <uart_type t_type>
-            class Mode;
-
-            /**
-             * @brief Mode descriptor for UART peripherals 
-             */
-            template <>
-            class Mode<uart_type::uart> {
-            public:
-                Parity parity;
-                Channel channel;
-
-                constexpr Mode(
-                    GenericMode parity = Parity::Even,
-                    GenericMode channel = Channel::Normal
-                ) : 
-                    parity(parity),
-                    channel(channel)
-                { }
-
-                template <uart_peripheral t_uart>
-                inline void Apply() {
-                    static_assert(t_uart == uart_peripheral::uart, "Provided t_uart is not an existing peripheral");
-                    debug_assert(parity != Parity::Multidrop, "UART does not support Parity::Multidrop");
-                    UART->UART_MR = (uint32_t) parity | (uint32_t) channel;
-                }
-            };
-
-            /**
-             * @brief Mode descriptor for USART peripherals
-             */
-            template <>
-            class Mode<uart_type::usart> {
-            public:
-                USARTMode mode;
-                ClockSelection clockSelection;
-                CharacterLength characterLength;
-                SynchronousMode synchronousMode;
-                SPIClockPhase spiClockPhase;
-                Parity parity;
-                StopBits stopBits;
-                Channel channel;
-                BitOrder bitOrder;
-                SPIClockPolarity spiClockPolarity;
-                ClockOutput clockOutput;
-                OversamplingMode oversamplingMode;
-                InhibitNonAcknowledge inhibitNonAcknowledge;
-                SuccessiveNACK successiveNACK;
-                InvertedData invertedData;
-                VariableSynchronization variableSynchronization;
-                MaxIterations maxIterations;
-                InfraredRxFilter infraredRxFilter;
-                ManchesterCodecEnabled manchesterCodecEnabled;
-                ManchesterSynchronizationMode manchesterSynchronizationMode;
-                StartFrameDelimiter startFrameDelimiter;
-
-                constexpr Mode(
-                    USARTMode mode = USARTMode::Normal,
-                    ClockSelection clockSelection = ClockSelection::MasterClock,
-                    CharacterLength characterLength = CharacterLength(),
-                    SynchronousMode synchronousMode = SynchronousMode::Async,
-                    SPIClockPhase spiClockPhase = SPIClockPhase::LeadingEdgeChanged_FollowingEdgeCaptured,
-                    Parity parity = Parity::Even,
-                    StopBits stopBits = StopBits::OneBit,
-                    Channel channel = Channel::Normal,
-                    BitOrder bitOrder = BitOrder::LeastSignificantFirst,
-                    SPIClockPolarity spiClockPolarity = SPIClockPolarity::ActiveHigh,
-                    ClockOutput clockOutput = ClockOutput::NotDriven,
-                    OversamplingMode oversamplingMode = OversamplingMode::x16,
-                    InhibitNonAcknowledge inhibitNonAcknowledge = InhibitNonAcknowledge::Generated,
-                    SuccessiveNACK successiveNACK = SuccessiveNACK::Enabled,
-                    InvertedData invertedData = InvertedData::ActiveHigh,
-                    VariableSynchronization variableSynchronization = VariableSynchronization::UserDefined,
-                    MaxIterations maxIterations = MaxIterations(),
-                    InfraredRxFilter infraredRxFilter = InfraredRxFilter::None,
-                    ManchesterCodecEnabled manchesterCodecEnabled = ManchesterCodecEnabled::Disabled,
-                    ManchesterSynchronizationMode manchesterSynchronizationMode = ManchesterSynchronizationMode::LowToHighTransition,
-                    StartFrameDelimiter startFrameDelimiter = StartFrameDelimiter::CommandOrDataSync
-                ) :
-                    mode(mode),
-                    clockSelection(clockSelection),
-                    characterLength(characterLength),
-                    synchronousMode(synchronousMode),
-                    spiClockPhase(spiClockPhase),
-                    parity(parity),
-                    stopBits(stopBits),
-                    channel(channel),
-                    bitOrder(bitOrder),
-                    spiClockPolarity(spiClockPolarity),
-                    clockOutput(clockOutput),
-                    oversamplingMode(oversamplingMode),
-                    inhibitNonAcknowledge(inhibitNonAcknowledge),
-                    successiveNACK(successiveNACK),
-                    invertedData(invertedData),
-                    variableSynchronization(variableSynchronization),
-                    maxIterations(maxIterations),
-                    infraredRxFilter(infraredRxFilter),
-                    manchesterCodecEnabled(manchesterCodecEnabled),
-                    manchesterSynchronizationMode(manchesterSynchronizationMode),
-                    startFrameDelimiter(startFrameDelimiter)
-                { }
-            };
-
-            static constexpr int32_t FromFrequencyToPrescalerSelector(uint32_t main_clock_frequency) {
-                // 0 CLK Selected clock
-                // 1 CLK_2 Selected clock divided by 2
-                // 2 CLK_4 Selected clock divided by 4
-                // 3 CLK_8 Selected clock divided by 8
-                // 4 CLK_16 Selected clock divided by 16
-                // 5 CLK_32 Selected clock divided by 32
-                // 6 CLK_64 Selected clock divided by 64
-                // 7 CLK_3 Selected clock divided by 3
-
-                if (main_clock_frequency == MainClockFrequency) {
-                    return 0;
-                } else if (main_clock_frequency == MainClockFrequency / 2) {
-                    return 1;
-                } else if (main_clock_frequency == MainClockFrequency / 4) {
-                    return 2;
-                } else if (main_clock_frequency == MainClockFrequency / 8) {
-                    return 3;
-                } else if (main_clock_frequency == MainClockFrequency / 16) {
-                    return 4;
-                } else if (main_clock_frequency == MainClockFrequency / 32) {
-                    return 5;
-                } else if (main_clock_frequency == MainClockFrequency / 64) {
-                    return 6;
-                } else if (main_clock_frequency == MainClockFrequency / 3) {
-                    return 7;
-                } else {
-                    return -1; // Invalid clock frequency
-                }
-            }
-
-            static constexpr int32_t FromPrescalerSelectorToFrequency(uint32_t prescaler_selection) {
-                if (prescaler_selection == 0) {
-                    return MainClockFrequency;
-                } else if (prescaler_selection == 1) {
-                    return MainClockFrequency / 2;
-                } else if (prescaler_selection == 2) {
-                    return MainClockFrequency / 4;
-                } else if (prescaler_selection == 3) {
-                    return MainClockFrequency / 8;
-                } else if (prescaler_selection == 4) {
-                    return MainClockFrequency / 16;
-                } else if (prescaler_selection == 5) {
-                    return MainClockFrequency / 32;
-                } else if (prescaler_selection == 6) {
-                    return MainClockFrequency / 64;
-                } else if (prescaler_selection == 7) {
-                    return MainClockFrequency / 3;
-                } else {
-                    return -1; // Invalid prescaler
-                }
-            }
-
-            /**
-             * @brief Calculates the divider for UART_BRGR
-             * 
-             * @details
-             * Uses the formula CD = (MCK / BAUD) / 16 to select the right
-             * clock divider. That formula is derived from the formula
-             * provided by the SAM3X datasheet: BAUD = MCK / (CD * 16)
-             * 
-             * @param master_clock_frequency 
-             * @param baudrate 
-             */
-            static constexpr uint32_t CalculateDivider(uint32_t master_clock_frequency, uint32_t baudrate) {
-                return (master_clock_frequency / baudrate) / 16;
-            }
-
-            /**
-             * @brief Checks if the baudrate can be exactly generated
-             * 
-             * @details
-             * According to the SAM3X datasheet, the clock divider cannot be
-             * more than 16 bits wide.
-             * 
-             * @param baudrate 
-             * @return true Baudrate can be generated by hardware
-             * @return false Invalid baudrate
-             */
-            static constexpr bool IsValidBaudrate(uint32_t master_clock_frequency, uint32_t baudrate) {
-                return CalculateDivider(master_clock_frequency, baudrate) <= 0xFFFF;
-            }
-
-            /**
-             * @brief Enables baud generation with the given clock
-             * frequency and baudrate
-             * 
-             * @tparam t_master_clock_frequency 
-             * @tparam t_baudrate 
-             */
-            template <uint32_t t_master_clock_frequency, uint32_t t_baudrate, class t_type>
-            static inline void EnableBaud(t_type uart) {
-                static_assert(FromFrequencyToPrescalerSelector(t_master_clock_frequency) != -1, "Invalid master clock frequency");
-                static_assert(IsValidBaudrate(t_master_clock_frequency, t_baudrate), "Invalid baudrate");
-                uart->UART_BRGR = CalculateDivider(t_master_clock_frequency, t_baudrate);
-            }
-
-            /**
-             * @brief Enables baud generation for the given baud
-             * 
-             * @details
-             * This function is designed to change baudrate during runtime.
-             * t_master_clock_frequency is provided during compilation since
-             * the CPU clock speed generally doesn't change during
-             * operation. Else EnableBaud(master_clock_frequency, baudrate)
-             * should be used.
-             * 
-             * @tparam t_master_clock_frequency 
-             * @param baudrate 
-             */
-            template <uint32_t t_master_clock_frequency, class t_type, t_type t_uart>
-            static inline void EnableBaud(t_type uart, uint32_t baudrate) {
-                static_assert(FromFrequencyToPrescalerSelector(t_master_clock_frequency) != -1, "Invalid master clock frequency");
-                debug_assert(IsValidBaudrate(t_master_clock_frequency, baudrate), "Invalid baudrate");
-                t_uart->UART_BRGR = CalculateDivider(t_master_clock_frequency, baudrate);
-            }
-
-            /**
-             * @brief Enables baud generation for the given baud
-             * 
-             * @details
-             * This function is designed to change the baudrate during runtime
-             * without a predetermined master clock frequency. That means when
-             * using this function the MCK must be looked up or calculated.
-             * 
-             * @param master_clock_frequency 
-             * @param baudrate 
-             */
-            template <class t_type>
-            static inline void EnableBaud(t_type uart, uint32_t master_clock_frequency, uint32_t baudrate) {
-                debug_assert(FromFrequencyToPrescalerSelector(master_clock_frequency) != -1, "Invalid master clock frequency");
-                debug_assert(IsValidBaudrate(master_clock_frequency, baudrate), "Invalid baudrate");
-                uart->UART_BRGR = CalculateDivider(master_clock_frequency, baudrate);
-            }
-
-            /**
-             * @brief Disable baud generation for UART
-             */
-            template <class t_type>
-            static inline void DisableBaud(t_type uart) {
-                // Zero for disabling
-                uart->UART_BRGR = 0;
-            }
-
-            template <class t_type>
-            static inline void ResetTRX(t_type uart);
-
-            /**
-             * @brief Resets the UART Tx and Rx
-             */
-            template <>
-            void ResetTRX<Uart*>(Uart* uart) {
-                uart->UART_CR = UART_CR_RSTRX | UART_CR_RSTTX | UART_CR_RXDIS | UART_CR_TXDIS;
-            }
-
-            /**
-             * @brief Resets the USART Tx and Rx
-             */
-            template <>
-            void ResetTRX<Usart*>(Usart* usart) {
-                usart->US_CR = UART_CR_RSTRX | UART_CR_RSTTX | UART_CR_RXDIS | UART_CR_TXDIS;
-            }
-
-            template <class t_type>
-            static inline void EnableTRX(t_type uart);
-
-            /**
-             * @brief Enables the UART Tx and Rx
-             */
-            template <>
-            void EnableTRX<Uart*>(Uart* uart) {
-                uart->UART_CR = UART_CR_RXEN | UART_CR_TXEN; 
-            }
-
-            /**
-             * @brief Enables the USART Tx and Rx
-             */
-            template <>
-            void EnableTRX<Usart*>(Usart* usart) {
-                usart->US_CR = UART_CR_RXEN | UART_CR_TXEN;
-            }
-
-            #define MAKE_CONFIG_STREAM_MODIFIER(name) static constexpr std::integral_constant<uint32_t, __COUNTER__> name = { }
-
-            MAKE_CONFIG_STREAM_MODIFIER(Enable);
-            MAKE_CONFIG_STREAM_MODIFIER(Disable);
-            MAKE_CONFIG_STREAM_MODIFIER(EvenParity);
-            MAKE_CONFIG_STREAM_MODIFIER(OddParity);
-            MAKE_CONFIG_STREAM_MODIFIER(SpaceParity);
-            MAKE_CONFIG_STREAM_MODIFIER(MarkParity);
-            MAKE_CONFIG_STREAM_MODIFIER(NoParity);
-
-            #undef MAKE_CONFIG_STREAM_MODIFIER
-
-            template <class t_value_type, uint32_t t_key, t_value_type t_value>
-            class constant_pair {
-            public:
-                static constexpr uint32_t key = t_key;
-                static constexpr t_value_type value = t_value;
-            };
-
-            template <uint32_t t_key, bool t_value>
-            using bool_pair = constant_pair<bool, t_key, t_value>;
-
-            template <uart_type t_uart_type, uart_peripheral t_peripheral>
-            class masks;
-
-            template <uart_peripheral t_peripheral>
-            class masks<uart_type::uart, t_peripheral> {
-            public:
-                template<uint32_t t_key, bool t_value>
-                void setup() {
-                    if constexpr (t_key == Enable) {
-                        // enable the clock to port A
-                        PMC->PMC_PCER0 = 1 << ID_PIOA;
-
-                        // disable PIO Control on PA9 and set up for Peripheral A
-                        PIOA->PIO_PDR = PIO_PA8; 
-                        PIOA->PIO_ABSR &= ~PIO_PA8;
-                        PIOA->PIO_PDR = PIO_PA9; 
-                        PIOA->PIO_ABSR &= ~PIO_PA9;
-
-                        // enable the clock to the UART
-                        PMC->PMC_PCER0 = 0x01 << ID_UART;
-                        uart_util::ResetTRX(UART);
-                        uart_util::EnableBaud<MainClockFrequency, 115200>(UART);
-
-                        // Disable all interrupts.	  
-                        UART->UART_IDR = 0xFFFFFFFF;   
-                        
-                        uart_util::EnableTRX(UART);
-                    } else if constexpr (t_key == Disable) {
-                        // Disable PIO control on PA8 and PA9
-                        // Leaves peripheral mode undefined
-                        PIOA->PIO_PDR = PIO_PA8;
-                        PIOA->PIO_PDR = PIO_PA9;
-
-                        // Disable clock to the UART
-                        PMC->PMC_PCER0 = 0x01 << ID_UART;
-                    } else if constexpr (t_key == EvenParity) {
-
-                    } else if constexpr (t_key == OddParity) {
-
-                    } else if constexpr (t_key == SpaceParity) {
-
-                    } else if constexpr (t_key == MarkParity) {
-
-                    } else if constexpr (t_key == NoParity) {
-
-                    }
-                }
-
-                template<class... t_pairs>
-                void setup() {
-                    (setup<t_pairs::key, t_pairs::value>(), ...);
-                }
-
-                void apply() { }
-            };
-
-            template <class t_os, class... t_pairs>
-            class _hwconfig;
-
-            template <class t_os, uint32_t t_key, bool t_value, class... t_pairs>
-            class _hwconfig<t_os, bool_pair<t_key, t_value>, t_pairs...> {
-                template<uint32_t t_lookup_key>
-                class get {
-                public:
-                    static constexpr bool value = (t_lookup_key == t_key) ? t_value : _hwconfig<t_os, t_pairs...>::template get<t_lookup_key>::value;
-                };
-
-            public:
-                bool destruct = true;
-
-                constexpr _hwconfig(t_os& os) { }
-
-                ~_hwconfig() {
-                    if (destruct) {
-                        masks<uart_type::uart, uart_peripheral::uart> m;
-                        m.setup<bool_pair<t_key, t_value>, t_pairs...>();
-                        m.apply();
-                    }
-                }
-            };
-
-            template <class t_os>
-            class _hwconfig<t_os> {
-                template<uint32_t t_lookup_key>
-                class get {
-                public:
-                    static constexpr bool value = false;
-                };
-
-            public:
-                bool destruct = true;
-
-                constexpr _hwconfig(t_os& os) { }
-
-                ~_hwconfig() { }
-            };
-
-            template <class t_os, template <class, class...> class t_config_os, class... t_pairs>
-            constexpr auto operator<< (t_os& os, const t_config_os<t_os, t_pairs...>& config_os) {
-                return os;
-            }
-
-            template <class t_origin_os, template <class, class...> class t_config_os, uint32_t t_applied_setting, class... t_pairs>
-            constexpr auto operator<< (t_config_os<t_origin_os, t_pairs...>&& config_os, const std::integral_constant<uint32_t, t_applied_setting> conf) {
-                // Prevent multiple register writes by unsetting the destruct flag
-                config_os.destruct = false;
-                return _hwconfig<decltype(config_os), bool_pair<t_applied_setting, true>>(config_os);
+            return -1;
+        }
+
+        enum class SynchronousMode {
+            Async = 0,
+            Sync = 1
+        };
+
+        enum class SPIClockPhase {
+            // Needs more elaboration, and perhals a more descriptive enum
+            LeadingEdgeChanged_FollowingEdgeCaptured = 0,
+            LeadingEdgeCaptured_FollowingEdgeChanged = 1
+        };
+
+        enum class Parity : uint32_t {
+            Even = 0,
+            Odd = 1 << 9,
+            Space = 2 << 9,
+            Mark = 3 << 9,
+            No = 4 << 9,
+            Multidrop = 6 << 9
+        };
+
+        enum class StopBits {
+            OneBit = 0,
+            OneAndHalfBits,
+            TwoBits
+        };
+
+        enum class Channel : uint32_t {
+            Normal = 0,
+            Automatic = 1 << 13,
+            LocalLoopback = 2 << 13,
+            RemoteLoopback = 3 << 13
+        };
+
+        enum class BitOrder {
+            LeastSignificantFirst = 0,
+            MostSignificantFirst = 1
+        };
+
+        enum class SPIClockPolarity {
+            ActiveHigh = 0,
+            ActiveLow = 1
+        };
+
+        enum class ClockOutput {
+            NotDriven = 0,
+            Driven = 1
+        };
+
+        enum class OversamplingMode {
+            x16 = 0,
+            x8 = 1
+        };
+
+        enum class InhibitNonAcknowledge {
+            Generated = 0,
+            NotGenerated = 1
+        };
+
+        enum class SuccessiveNACK {
+            Enabled = 0,
+            Disable = 1
+        };
+
+        enum class InvertedData {
+            ActiveHigh = 0,
+            ActiveLow = 1
+        };
+
+        enum class VariableSynchronization {
+            UserDefined = 0,
+            OnReceived = 1
+        };
+
+        class MaxIterations {
+        public:
+            unsigned maxIterations : 3;
+
+            constexpr MaxIterations(uint8_t maxIterations = 0) : maxIterations(maxIterations) { }
+        };
+
+        enum class InfraredRxFilter {
+            None = 0,
+            ThreeSampleFilter = 1
+        };
+
+        enum class ManchesterCodecEnabled {
+            Disabled = 0,
+            Enabled = 1
+        };
+
+        enum class ManchesterSynchronizationMode {
+            LowToHighTransition = 0,
+            HighToLowTransition = 1
+        };
+
+        enum class StartFrameDelimiter {
+            CommandOrDataSync = 0,
+            OneBit = 1
+        };
+
+        union GenericMode {
+        public:
+            uint32_t generic;
+            USARTMode mode;
+            ClockSelection clockSelection;
+            CharacterLength characterLength;
+            SynchronousMode synchronousMode;
+            SPIClockPhase spiClockPhase;
+            Parity parity;
+            StopBits stopBits;
+            Channel channel;
+            BitOrder bitOrder;
+            SPIClockPolarity spiClockPolarity;
+            ClockOutput clockOutput;
+            OversamplingMode oversamplingMode;
+            InhibitNonAcknowledge inhibitNonAcknowledge;
+            SuccessiveNACK successiveNACK;
+            InvertedData invertedData;
+            VariableSynchronization variableSynchronization;
+            MaxIterations maxIterations;
+            InfraredRxFilter infraredRxFilter;
+            ManchesterCodecEnabled manchesterCodecEnabled;
+            ManchesterSynchronizationMode manchesterSynchronizationMode;
+            StartFrameDelimiter startFrameDelimiter;
+
+            template <class t_enum>
+            constexpr GenericMode(t_enum mode) : generic(static_cast<uint32_t>(mode)) { }
+
+            template <class T>
+            constexpr operator T() {
+                return static_cast<T>(generic);
             }
         };
 
-        template <class t_os>
-        auto hwconfig(t_os& os) {
-            return uart_util::_hwconfig<t_os>(os);
-        }
-
-        template <uart_peripheral t_uart>
-        class uart_impl;
+        template <uart_port::type t_type>
+        class Mode;
 
         /**
-         * @brief Primary UART controller
-         * 
-         * @details
-         * Primary UART controller routines. All debug logs should by default
-         * be sent using the routines in this class.
+         * @brief Mode descriptor for UART peripherals 
          */
         template <>
-        class uart_impl<uart_peripheral::uart> {
+        class Mode<uart_port::type::uart> {
+        public:
+            Parity parity;
+            Channel channel;
+
+            constexpr Mode(
+                GenericMode parity = Parity::Even,
+                GenericMode channel = Channel::Normal
+            ) : 
+                parity(parity),
+                channel(channel)
+            { }
+
+            template <uart_port::peripheral t_uart>
+            inline void Apply() {
+                static_assert(t_uart == uart_port::peripheral::uart, "Provided t_uart is not an existing peripheral");
+                debug_assert(parity != Parity::Multidrop, "UART does not support Parity::Multidrop");
+                UART->UART_MR = (uint32_t) parity | (uint32_t) channel;
+            }
+        };
+
+        /**
+         * @brief Mode descriptor for USART peripherals
+         */
+        template <>
+        class Mode<uart_port::type::usart> {
+        public:
+            USARTMode mode;
+            ClockSelection clockSelection;
+            CharacterLength characterLength;
+            SynchronousMode synchronousMode;
+            SPIClockPhase spiClockPhase;
+            Parity parity;
+            StopBits stopBits;
+            Channel channel;
+            BitOrder bitOrder;
+            SPIClockPolarity spiClockPolarity;
+            ClockOutput clockOutput;
+            OversamplingMode oversamplingMode;
+            InhibitNonAcknowledge inhibitNonAcknowledge;
+            SuccessiveNACK successiveNACK;
+            InvertedData invertedData;
+            VariableSynchronization variableSynchronization;
+            MaxIterations maxIterations;
+            InfraredRxFilter infraredRxFilter;
+            ManchesterCodecEnabled manchesterCodecEnabled;
+            ManchesterSynchronizationMode manchesterSynchronizationMode;
+            StartFrameDelimiter startFrameDelimiter;
+
+            constexpr Mode(
+                USARTMode mode = USARTMode::Normal,
+                ClockSelection clockSelection = ClockSelection::MasterClock,
+                CharacterLength characterLength = CharacterLength(),
+                SynchronousMode synchronousMode = SynchronousMode::Async,
+                SPIClockPhase spiClockPhase = SPIClockPhase::LeadingEdgeChanged_FollowingEdgeCaptured,
+                Parity parity = Parity::Even,
+                StopBits stopBits = StopBits::OneBit,
+                Channel channel = Channel::Normal,
+                BitOrder bitOrder = BitOrder::LeastSignificantFirst,
+                SPIClockPolarity spiClockPolarity = SPIClockPolarity::ActiveHigh,
+                ClockOutput clockOutput = ClockOutput::NotDriven,
+                OversamplingMode oversamplingMode = OversamplingMode::x16,
+                InhibitNonAcknowledge inhibitNonAcknowledge = InhibitNonAcknowledge::Generated,
+                SuccessiveNACK successiveNACK = SuccessiveNACK::Enabled,
+                InvertedData invertedData = InvertedData::ActiveHigh,
+                VariableSynchronization variableSynchronization = VariableSynchronization::UserDefined,
+                MaxIterations maxIterations = MaxIterations(),
+                InfraredRxFilter infraredRxFilter = InfraredRxFilter::None,
+                ManchesterCodecEnabled manchesterCodecEnabled = ManchesterCodecEnabled::Disabled,
+                ManchesterSynchronizationMode manchesterSynchronizationMode = ManchesterSynchronizationMode::LowToHighTransition,
+                StartFrameDelimiter startFrameDelimiter = StartFrameDelimiter::CommandOrDataSync
+            ) :
+                mode(mode),
+                clockSelection(clockSelection),
+                characterLength(characterLength),
+                synchronousMode(synchronousMode),
+                spiClockPhase(spiClockPhase),
+                parity(parity),
+                stopBits(stopBits),
+                channel(channel),
+                bitOrder(bitOrder),
+                spiClockPolarity(spiClockPolarity),
+                clockOutput(clockOutput),
+                oversamplingMode(oversamplingMode),
+                inhibitNonAcknowledge(inhibitNonAcknowledge),
+                successiveNACK(successiveNACK),
+                invertedData(invertedData),
+                variableSynchronization(variableSynchronization),
+                maxIterations(maxIterations),
+                infraredRxFilter(infraredRxFilter),
+                manchesterCodecEnabled(manchesterCodecEnabled),
+                manchesterSynchronizationMode(manchesterSynchronizationMode),
+                startFrameDelimiter(startFrameDelimiter)
+            { }
+        };
+
+        static constexpr int32_t FromFrequencyToPrescalerSelector(uint32_t main_clock_frequency) {
+            // 0 CLK Selected clock
+            // 1 CLK_2 Selected clock divided by 2
+            // 2 CLK_4 Selected clock divided by 4
+            // 3 CLK_8 Selected clock divided by 8
+            // 4 CLK_16 Selected clock divided by 16
+            // 5 CLK_32 Selected clock divided by 32
+            // 6 CLK_64 Selected clock divided by 64
+            // 7 CLK_3 Selected clock divided by 3
+
+            if (main_clock_frequency == MainClockFrequency) {
+                return 0;
+            } else if (main_clock_frequency == MainClockFrequency / 2) {
+                return 1;
+            } else if (main_clock_frequency == MainClockFrequency / 4) {
+                return 2;
+            } else if (main_clock_frequency == MainClockFrequency / 8) {
+                return 3;
+            } else if (main_clock_frequency == MainClockFrequency / 16) {
+                return 4;
+            } else if (main_clock_frequency == MainClockFrequency / 32) {
+                return 5;
+            } else if (main_clock_frequency == MainClockFrequency / 64) {
+                return 6;
+            } else if (main_clock_frequency == MainClockFrequency / 3) {
+                return 7;
+            } else {
+                return -1; // Invalid clock frequency
+            }
+        }
+
+        static constexpr int32_t FromPrescalerSelectorToFrequency(uint32_t prescaler_selection) {
+            if (prescaler_selection == 0) {
+                return MainClockFrequency;
+            } else if (prescaler_selection == 1) {
+                return MainClockFrequency / 2;
+            } else if (prescaler_selection == 2) {
+                return MainClockFrequency / 4;
+            } else if (prescaler_selection == 3) {
+                return MainClockFrequency / 8;
+            } else if (prescaler_selection == 4) {
+                return MainClockFrequency / 16;
+            } else if (prescaler_selection == 5) {
+                return MainClockFrequency / 32;
+            } else if (prescaler_selection == 6) {
+                return MainClockFrequency / 64;
+            } else if (prescaler_selection == 7) {
+                return MainClockFrequency / 3;
+            } else {
+                return -1; // Invalid prescaler
+            }
+        }
+
+        /**
+         * @brief Calculates the divider for UART_BRGR
+         * 
+         * @details
+         * Uses the formula CD = (MCK / BAUD) / 16 to select the right
+         * clock divider. That formula is derived from the formula
+         * provided by the SAM3X datasheet: BAUD = MCK / (CD * 16)
+         * 
+         * @param master_clock_frequency 
+         * @param baudrate 
+         */
+        static constexpr uint32_t CalculateDivider(uint32_t master_clock_frequency, uint32_t baudrate) {
+            return (master_clock_frequency / baudrate) / 16;
+        }
+
+        /**
+         * @brief Checks if the baudrate can be exactly generated
+         * 
+         * @details
+         * According to the SAM3X datasheet, the clock divider cannot be
+         * more than 16 bits wide.
+         * 
+         * @param baudrate 
+         * @return true Baudrate can be generated by hardware
+         * @return false Invalid baudrate
+         */
+        static constexpr bool IsValidBaudrate(uint32_t master_clock_frequency, uint32_t baudrate) {
+            return CalculateDivider(master_clock_frequency, baudrate) <= 0xFFFF;
+        }
+
+        /**
+         * @brief Enables baud generation with the given clock
+         * frequency and baudrate
+         * 
+         * @tparam t_master_clock_frequency 
+         * @tparam t_baudrate 
+         */
+        template <uint32_t t_master_clock_frequency, uint32_t t_baudrate, class t_type>
+        static inline void EnableBaud(t_type uart) {
+            static_assert(FromFrequencyToPrescalerSelector(t_master_clock_frequency) != -1, "Invalid master clock frequency");
+            static_assert(IsValidBaudrate(t_master_clock_frequency, t_baudrate), "Invalid baudrate");
+            uart->UART_BRGR = CalculateDivider(t_master_clock_frequency, t_baudrate);
+        }
+
+        /**
+         * @brief Enables baud generation for the given baud
+         * 
+         * @details
+         * This function is designed to change baudrate during runtime.
+         * t_master_clock_frequency is provided during compilation since
+         * the CPU clock speed generally doesn't change during
+         * operation. Else EnableBaud(master_clock_frequency, baudrate)
+         * should be used.
+         * 
+         * @tparam t_master_clock_frequency 
+         * @param baudrate 
+         */
+        template <uint32_t t_master_clock_frequency, class t_type, t_type t_uart>
+        static inline void EnableBaud(t_type uart, uint32_t baudrate) {
+            static_assert(FromFrequencyToPrescalerSelector(t_master_clock_frequency) != -1, "Invalid master clock frequency");
+            debug_assert(IsValidBaudrate(t_master_clock_frequency, baudrate), "Invalid baudrate");
+            t_uart->UART_BRGR = CalculateDivider(t_master_clock_frequency, baudrate);
+        }
+
+        /**
+         * @brief Enables baud generation for the given baud
+         * 
+         * @details
+         * This function is designed to change the baudrate during runtime
+         * without a predetermined master clock frequency. That means when
+         * using this function the MCK must be looked up or calculated.
+         * 
+         * @param master_clock_frequency 
+         * @param baudrate 
+         */
+        template <class t_type>
+        static inline void EnableBaud(t_type uart, uint32_t master_clock_frequency, uint32_t baudrate) {
+            debug_assert(FromFrequencyToPrescalerSelector(master_clock_frequency) != -1, "Invalid master clock frequency");
+            debug_assert(IsValidBaudrate(master_clock_frequency, baudrate), "Invalid baudrate");
+            uart->UART_BRGR = CalculateDivider(master_clock_frequency, baudrate);
+        }
+
+        /**
+         * @brief Disable baud generation for UART
+         */
+        template <class t_type>
+        static inline void DisableBaud(t_type uart) {
+            // Zero for disabling
+            uart->UART_BRGR = 0;
+        }
+
+        template <class t_type>
+        static inline void ResetTRX(t_type uart);
+
+        /**
+         * @brief Resets the UART Tx and Rx
+         */
+        template <>
+        void ResetTRX<Uart*>(Uart* uart) {
+            uart->UART_CR = UART_CR_RSTRX | UART_CR_RSTTX | UART_CR_RXDIS | UART_CR_TXDIS;
+        }
+
+        /**
+         * @brief Resets the USART Tx and Rx
+         */
+        template <>
+        void ResetTRX<Usart*>(Usart* usart) {
+            usart->US_CR = UART_CR_RSTRX | UART_CR_RSTTX | UART_CR_RXDIS | UART_CR_TXDIS;
+        }
+
+        template <class t_type>
+        static inline void EnableTRX(t_type uart);
+
+        /**
+         * @brief Enables the UART Tx and Rx
+         */
+        template <>
+        void EnableTRX<Uart*>(Uart* uart) {
+            uart->UART_CR = UART_CR_RXEN | UART_CR_TXEN; 
+        }
+
+        /**
+         * @brief Enables the USART Tx and Rx
+         */
+        template <>
+        void EnableTRX<Usart*>(Usart* usart) {
+            usart->US_CR = UART_CR_RXEN | UART_CR_TXEN;
+        }
+
+        #define MAKE_CONFIG_STREAM_MODIFIER(name) static constexpr std::integral_constant<uint32_t, __COUNTER__> name = { }
+
+        MAKE_CONFIG_STREAM_MODIFIER(Enable);
+        MAKE_CONFIG_STREAM_MODIFIER(Disable);
+        MAKE_CONFIG_STREAM_MODIFIER(EvenParity);
+        MAKE_CONFIG_STREAM_MODIFIER(OddParity);
+        MAKE_CONFIG_STREAM_MODIFIER(SpaceParity);
+        MAKE_CONFIG_STREAM_MODIFIER(MarkParity);
+        MAKE_CONFIG_STREAM_MODIFIER(NoParity);
+
+        #undef MAKE_CONFIG_STREAM_MODIFIER
+
+        template <class t_value_type, uint32_t t_key, t_value_type t_value>
+        class constant_pair {
+        public:
+            static constexpr uint32_t key = t_key;
+            static constexpr t_value_type value = t_value;
+        };
+
+        template <uint32_t t_key, bool t_value>
+        using bool_pair = constant_pair<bool, t_key, t_value>;
+
+        template <uart_port::peripheral t_uart>
+        class masks;
+
+        template <>
+        class masks<uart_port::peripheral::uart> {
+        public:
+            template <uint32_t t_key, bool t_value>
+            void setup() {
+                if constexpr (t_key == Enable) {
+                    // enable the clock to port A
+                    PMC->PMC_PCER0 = 1 << ID_PIOA;
+
+                    // disable PIO Control on PA9 and set up for Peripheral A
+                    PIOA->PIO_PDR = PIO_PA8; 
+                    PIOA->PIO_ABSR &= ~PIO_PA8;
+                    PIOA->PIO_PDR = PIO_PA9; 
+                    PIOA->PIO_ABSR &= ~PIO_PA9;
+
+                    // enable the clock to the UART
+                    PMC->PMC_PCER0 = 0x01 << ID_UART;
+                    ResetTRX(UART);
+                    EnableBaud<MainClockFrequency, 115200>(UART);
+
+                    // Disable all interrupts.	  
+                    UART->UART_IDR = 0xFFFFFFFF;   
+                    
+                    EnableTRX(UART);
+                } else if constexpr (t_key == Disable) {
+                    // Disable PIO control on PA8 and PA9
+                    // Leaves peripheral mode undefined
+                    PIOA->PIO_PDR = PIO_PA8;
+                    PIOA->PIO_PDR = PIO_PA9;
+
+                    // Disable clock to the UART
+                    PMC->PMC_PCER0 = 0x01 << ID_UART;
+                } else if constexpr (t_key == EvenParity) {
+
+                } else if constexpr (t_key == OddParity) {
+
+                } else if constexpr (t_key == SpaceParity) {
+
+                } else if constexpr (t_key == MarkParity) {
+
+                } else if constexpr (t_key == NoParity) {
+
+                }
+            }
+
+            template <class... t_pairs>
+            void setup() {
+                (setup<t_pairs::key, t_pairs::value>(), ...);
+            }
+
+            void apply() { }
+        };
+
+        template <class t_os, uart_port::peripheral t_peripheral, class... t_pairs>
+        class _hwconfig;
+
+        template <class t_os, uart_port::peripheral t_peripheral, uint32_t t_key, bool t_value, class... t_pairs>
+        class _hwconfig<t_os, t_peripheral, bool_pair<t_key, t_value>, t_pairs...> {
+            template <uint32_t t_lookup_key>
+            class get {
+            public:
+                static constexpr bool value = (t_lookup_key == t_key) ? t_value : _hwconfig<t_os, t_peripheral, t_pairs...>::template get<t_lookup_key>::value;
+            };
 
         public:
-            static inline void Enable(uart_util::Mode<uart_type::uart> mode) {
-                // enable the clock to port A
-                PMC->PMC_PCER0 = 1 << ID_PIOA;
+            bool destruct = true;
 
-                // disable PIO Control on PA9 and set up for Peripheral A
-                PIOA->PIO_PDR = PIO_PA8; 
-                PIOA->PIO_ABSR &= ~PIO_PA8;
-                PIOA->PIO_PDR = PIO_PA9; 
-                PIOA->PIO_ABSR &= ~PIO_PA9;
+            constexpr _hwconfig(t_os& os) { }
 
-                // enable the clock to the UART
-                PMC->PMC_PCER0 = 0x01 << ID_UART;
-
-                // Reset and disable receiver and transmitter.
-                uart_util::ResetTRX(UART);
-                uart_util::EnableBaud<MainClockFrequency, 115200>(UART);
-
-                mode.Apply<uart_peripheral::uart>();
-
-                // Disable all interrupts.	  
-                UART->UART_IDR = 0xFFFFFFFF;   
-
-                uart_util::EnableTRX(UART);
+            ~_hwconfig() {
+                if (destruct) {
+                    masks<uart_port::peripheral::uart> m;
+                    m.setup<bool_pair<t_key, t_value>, t_pairs...>();
+                    m.apply();
+                }
             }
+        };
 
-            static inline void Disable() {
-                // Disable PIO control on PA8 and PA9
-                // Leaves peripheral mode undefined
-                PIOA->PIO_PDR = PIO_PA8;
-                PIOA->PIO_PDR = PIO_PA9;
+        template <class t_os, uart_port::peripheral t_peripheral>
+        class _hwconfig<t_os, t_peripheral> {
+            template <uint32_t t_lookup_key>
+            class get {
+            public:
+                static constexpr bool value = false;
+            };
 
-                // Disable clock to the UART
-                PMC->PMC_PCER0 = 0x01 << ID_UART;
-            }
+        public:
+            bool destruct = true;
 
+            constexpr _hwconfig(t_os& os) { }
+
+            ~_hwconfig() { }
+        };
+
+        template <class t_os, template <class, class...> class t_config_os, class... t_pairs>
+        constexpr auto operator<< (t_os& os, const t_config_os<t_os, t_pairs...>& config_os) {
+            return os;
+        }
+
+        template <
+            class t_origin_os,
+            uart_port::peripheral t_peripheral,
+            template <class, uart_port::peripheral, class...> class t_config_os,
+            uint32_t t_applied_setting,
+            class... t_pairs
+        >
+        constexpr auto operator<< (t_config_os<t_origin_os, t_peripheral, t_pairs...>&& config_os, const std::integral_constant<uint32_t, t_applied_setting> conf) {
+            // Prevent multiple register writes by unsetting the destruct flag
+            config_os.destruct = false;
+            return _hwconfig<decltype(config_os), t_peripheral, bool_pair<t_applied_setting, true>>(config_os);
+        }
+
+        template <
+            class t_peripheral_type,
+            t_peripheral_type t_peripheral,
+            template < t_peripheral_type > class t_impl,
+            template < class > class t_os
+        >
+        auto hwconfig(t_os<t_impl<t_peripheral>>& os) {
+            return _hwconfig<t_os<t_impl<t_peripheral>>, t_peripheral>(os);
+        }
+
+        template <uart_port::peripheral t_uart>
+        class uart_impl;
+
+        template <>
+        class uart_impl<uart_port::peripheral::uart> {
+        public:
             /**
              * @brief Places char c on the UART Tx line
              * 
@@ -929,20 +921,69 @@ namespace hwstl {
                 while(UART->UART_SR & 1 == 1) { } // TODO: Check for timeout and return -1
                 return UART->UART_RHR;
             }
+        };
 
-            template <uint32_t... vt_args>
-            __attribute__((always_inline))
-            inline static void Configure(std::integral_constant<uint32_t, vt_args>... args)  { 
-                // Enable(uart_util::Mode<uart_type::uart>(vt_args...));
+        template <uart_port::peripheral t_peripheral>
+        class uart_impl {
+        public:
+            /**
+             * @brief Places char c on the UART Tx line
+             * 
+             * @param c 
+             */
+            static inline void putc(unsigned char c) {
+                if constexpr (t_peripheral == uart_port::peripheral::usart0) {
+                    while ((USART0->US_CSR & 2) == 0) { }
+                    USART0->US_THR = c;
+                } else if constexpr (t_peripheral == uart_port::peripheral::usart1) {
+                    while ((USART1->US_CSR & 2) == 0) { }
+                    USART1->US_THR = c;
+                } else if constexpr (t_peripheral == uart_port::peripheral::usart2) {
+                    while ((USART2->US_CSR & 2) == 0) { }
+                    USART2->US_THR = c;
+                }
             }
 
-            // __attribute__((always_inline))
-            // inline static void Configure()  { 
-            //     Enable(uart_util::Mode<uart_type::uart>(
-            //         uart_util::Parity::No,
-            //         uart_util::Channel::Normal
-            //     ));
-            // }
+            /**
+             * @brief Reads char from the UART Rx line
+             * 
+             * @return unsigned char 
+             */
+            static inline unsigned char getc() {
+                if constexpr (t_peripheral == uart_port::peripheral::usart0) {
+                    while ((USART0->US_CSR & 1) == 1) { }
+                    return USART0->US_RHR; 
+                } else if constexpr (t_peripheral == uart_port::peripheral::usart1) {
+                    while ((USART1->US_CSR & 1) == 1) { }
+                    return USART1->US_RHR; 
+                } else if constexpr (t_peripheral == uart_port::peripheral::usart2) {
+                    while ((USART2->US_CSR & 1) == 1) { }
+                    return USART2->US_RHR; 
+                }
+            }
+
+            /**
+             * @brief Reads char from the UART Rx line with a timeout
+             * 
+             * @details
+             * Returns -1 when a timeout occurred. Safe to cast to unsigned
+             * char if getc did not timeout.
+             * 
+             * @return int32_t
+             */
+            template <uint32_t t_timeout>
+            static inline int32_t getc() {
+                if constexpr (t_peripheral == uart_port::peripheral::usart0) {
+                    while ((USART0->US_CSR & 1) == 1) { } // TODO: Check for timeout and return -1
+                    return USART0->US_RHR;
+                } else if constexpr (t_peripheral == uart_port::peripheral::usart1) {
+                    while ((USART1->US_CSR & 1) == 1) { } // TODO: Check for timeout and return -1
+                    return USART1->US_RHR;
+                } else if constexpr (t_peripheral == uart_port::peripheral::usart2) {
+                    while ((USART2->US_CSR & 1) == 1) { } // TODO: Check for timeout and return -1
+                    return USART2->US_RHR;
+                }
+            }
         };
 
         uint_fast64_t now_ticks();
