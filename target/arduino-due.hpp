@@ -756,11 +756,11 @@ namespace hwstl {
         template <uint32_t t_key, bool t_value>
         using bool_pair = constant_pair<bool, t_key, t_value>;
 
-        template <uart_port::peripheral t_uart>
+        template <uart_port::peripheral t_uart, class... vt_pairs>
         class masks;
 
-        template <>
-        class masks<uart_port::peripheral::uart> {
+        template <class... vt_pairs>
+        class masks<uart_port::peripheral::uart, vt_pairs...> {
         public:
             template <uint32_t t_key, bool t_value>
             void setup() {
@@ -804,41 +804,66 @@ namespace hwstl {
                 }
             }
 
-            template <class... t_pairs>
-            void setup() {
-                (setup<t_pairs::key, t_pairs::value>(), ...);
+            void apply() {
+                (setup<vt_pairs::key, vt_pairs::value>(), ...);
             }
-
-            void apply() { }
         };
 
-        template <class t_os, uart_port::peripheral t_peripheral, class... t_pairs>
+        template <class t_ios, uart_port::peripheral t_peripheral, class... vt_pairs>
         class _hwconfig;
 
-        template <class t_os, uart_port::peripheral t_peripheral, uint32_t t_key, bool t_value, class... t_pairs>
-        class _hwconfig<t_os, t_peripheral, bool_pair<t_key, t_value>, t_pairs...> {
+        /**
+         * @brief Internal _hwconfig class with config pairs
+         * 
+         * @details
+         * Internal _hwconfig class. This class provides get<{int}> for looking
+         * up a pair during compile time.
+         * 
+         * If this class is destructed, the config pairs are passed into a
+         * setup routine. This routine should evaluate the pairs into
+         * the minimum required register IO to configure the underlying
+         * peripheral. 
+         * 
+         * @tparam t_ios iostream to configure
+         * @tparam t_peripheral Peripheral to configure
+         * @tparam t_key Key of the next item in the map
+         * @tparam t_value Value of the next item in the map
+         * @tparam vt_pairs Tailing config pairs in the map 
+         */
+        template <class t_ios, uart_port::peripheral t_peripheral, uint32_t t_key, bool t_value, class... vt_pairs>
+        class _hwconfig<t_ios, t_peripheral, bool_pair<t_key, t_value>, vt_pairs...> {
             template <uint32_t t_lookup_key>
             class get {
             public:
-                static constexpr bool value = (t_lookup_key == t_key) ? t_value : _hwconfig<t_os, t_peripheral, t_pairs...>::template get<t_lookup_key>::value;
+                static constexpr bool value = (t_lookup_key == t_key) ? t_value : _hwconfig<t_ios, t_peripheral, vt_pairs...>::template get<t_lookup_key>::value;
             };
 
         public:
             bool destruct = true;
 
-            constexpr _hwconfig(t_os& os) { }
+            constexpr _hwconfig() { }
 
             ~_hwconfig() {
                 if (destruct) {
-                    masks<uart_port::peripheral::uart> m;
-                    m.setup<bool_pair<t_key, t_value>, t_pairs...>();
+                    masks<t_peripheral, bool_pair<t_key, t_value>, vt_pairs...> m;
                     m.apply();
                 }
             }
         };
 
-        template <class t_os, uart_port::peripheral t_peripheral>
-        class _hwconfig<t_os, t_peripheral> {
+        /**
+         * @brief Internal _hwconfig class
+         * 
+         * @deteails
+         * Internal _hwconfig class. This class provides the default get<{int}>
+         * by defining a specialization for for a _hwconfig without config
+         * pairs. 
+         * 
+         * @tparam t_ios iostream to configure
+         * @tparam t_peripheral Peripheral to configure
+         */
+        template <class t_ios, uart_port::peripheral t_peripheral>
+        class _hwconfig<t_ios, t_peripheral> {
             template <uint32_t t_lookup_key>
             class get {
             public:
@@ -848,37 +873,52 @@ namespace hwstl {
         public:
             bool destruct = true;
 
-            constexpr _hwconfig(t_os& os) { }
-
-            ~_hwconfig() { }
+            constexpr _hwconfig() { }
         };
 
-        template <class t_os, template <class, class...> class t_config_os, class... t_pairs>
-        constexpr auto operator<< (t_os& os, const t_config_os<t_os, t_pairs...>& config_os) {
-            return os;
-        }
-
+        /**
+         * @brief Compile time << operator
+         * 
+         * @details
+         * Applies the manipulator to the underlying hardware peripheral of the
+         * iostream wrapped by hwconfig. Register IO is combined as much as
+         * possible in order to improve run-time efficiency and code size.
+         * 
+         * @param config_os Configuring ostream
+         * @param conf Config item <<'ed into hwconfig
+         * @return hwconfig
+         */
         template <
-            class t_origin_os,
+            class t_origin_ios,
             uart_port::peripheral t_peripheral,
             template <class, uart_port::peripheral, class...> class t_config_os,
             uint32_t t_applied_setting,
             class... t_pairs
         >
-        constexpr auto operator<< (t_config_os<t_origin_os, t_peripheral, t_pairs...>&& config_os, const std::integral_constant<uint32_t, t_applied_setting> conf) {
+        constexpr auto operator<< (t_config_os<t_origin_ios, t_peripheral, t_pairs...>&& config_os, const std::integral_constant<uint32_t, t_applied_setting> conf) {
             // Prevent multiple register writes by unsetting the destruct flag
             config_os.destruct = false;
-            return _hwconfig<decltype(config_os), t_peripheral, bool_pair<t_applied_setting, true>>(config_os);
+            return _hwconfig<decltype(config_os), t_peripheral, bool_pair<t_applied_setting, true>>();
         }
 
+        /**
+         * @brief Generates a config ostream allowing for configuring streams
+         * 
+         * @details
+         * Constructs a config ostream class which allows for compile time
+         * optimized configuring for stream based peripherals.
+         * 
+         * @param ios Stream to configure
+         * @return _hwconfig
+         */
         template <
             class t_peripheral_type,
             t_peripheral_type t_peripheral,
             template < t_peripheral_type > class t_impl,
-            template < class > class t_os
+            template < class > class t_ios
         >
-        auto hwconfig(t_os<t_impl<t_peripheral>>& os) {
-            return _hwconfig<t_os<t_impl<t_peripheral>>, t_peripheral>(os);
+        auto hwconfig(t_ios<t_impl<t_peripheral>>& ios) {
+            return _hwconfig<t_ios<t_impl<t_peripheral>>, t_peripheral>();
         }
 
         template <uart_port::peripheral t_uart>
