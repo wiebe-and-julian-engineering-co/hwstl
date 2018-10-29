@@ -788,22 +788,22 @@ namespace hwstl {
             };
 
             template <class t_os, class... t_pairs>
-            class _oconfig;
+            class _hwconfig;
 
             template <class t_os, uint32_t t_key, bool t_value, class... t_pairs>
-            class _oconfig<t_os, bool_pair<t_key, t_value>, t_pairs...> {
+            class _hwconfig<t_os, bool_pair<t_key, t_value>, t_pairs...> {
                 template<uint32_t t_lookup_key>
                 class get {
                 public:
-                    static constexpr bool value = (t_lookup_key == t_key) ? t_value : _oconfig<t_os, t_pairs...>::template get<t_lookup_key>::value;
+                    static constexpr bool value = (t_lookup_key == t_key) ? t_value : _hwconfig<t_os, t_pairs...>::template get<t_lookup_key>::value;
                 };
 
             public:
                 bool destruct = true;
 
-                constexpr _oconfig(t_os& os) { }
+                constexpr _hwconfig(t_os& os) { }
 
-                ~_oconfig() {
+                ~_hwconfig() {
                     if (destruct) {
                         masks<uart_type::uart, uart_peripheral::uart> m;
                         m.setup<bool_pair<t_key, t_value>, t_pairs...>();
@@ -813,7 +813,7 @@ namespace hwstl {
             };
 
             template <class t_os>
-            class _oconfig<t_os> {
+            class _hwconfig<t_os> {
                 template<uint32_t t_lookup_key>
                 class get {
                 public:
@@ -823,9 +823,9 @@ namespace hwstl {
             public:
                 bool destruct = true;
 
-                constexpr _oconfig(t_os& os) { }
+                constexpr _hwconfig(t_os& os) { }
 
-                ~_oconfig() { }
+                ~_hwconfig() { }
             };
 
             template <class t_os, template <class, class...> class t_config_os, class... t_pairs>
@@ -837,13 +837,13 @@ namespace hwstl {
             constexpr auto operator<< (t_config_os<t_origin_os, t_pairs...>&& config_os, const std::integral_constant<uint32_t, t_applied_setting> conf) {
                 // Prevent multiple register writes by unsetting the destruct flag
                 config_os.destruct = false;
-                return _oconfig<decltype(config_os), bool_pair<t_applied_setting, true>>(config_os);
+                return _hwconfig<decltype(config_os), bool_pair<t_applied_setting, true>>(config_os);
             }
         };
 
         template <class t_os>
-        auto oconfig(t_os& os) {
-            return uart_util::_oconfig<t_os>(os);
+        auto hwconfig(t_os& os) {
+            return uart_util::_hwconfig<t_os>(os);
         }
 
         template <uart_peripheral t_uart>
