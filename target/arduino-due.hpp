@@ -736,9 +736,25 @@ namespace hwstl {
 
         #define MAKE_CONFIG_STREAM_MODIFIER(name) static constexpr std::integral_constant<uint32_t, __COUNTER__> name = { }
 
+        template <class t_peripheral_type, t_peripheral_type t_peripheral, class... vt_pairs>
+        class masks;
+
         // Power control
         MAKE_CONFIG_STREAM_MODIFIER(Enable);
         MAKE_CONFIG_STREAM_MODIFIER(Disable);
+
+        // Interrupts
+        MAKE_CONFIG_STREAM_MODIFIER(DisableInterrupts);
+        MAKE_CONFIG_STREAM_MODIFIER(EnableRxReady);
+        MAKE_CONFIG_STREAM_MODIFIER(EnableTxReady);
+        MAKE_CONFIG_STREAM_MODIFIER(EnableEndOfReceiveTransfer);
+        MAKE_CONFIG_STREAM_MODIFIER(EnableEndOfTransmit);
+        MAKE_CONFIG_STREAM_MODIFIER(EnableOverrunError);
+        MAKE_CONFIG_STREAM_MODIFIER(EnableFramingError);
+        MAKE_CONFIG_STREAM_MODIFIER(EnableParityError);
+        MAKE_CONFIG_STREAM_MODIFIER(EnableTxEmpty);
+        MAKE_CONFIG_STREAM_MODIFIER(EnableBufferEmpty);
+        MAKE_CONFIG_STREAM_MODIFIER(EnableBufferFull);
 
         // Parity
         MAKE_CONFIG_STREAM_MODIFIER(EvenParity);
@@ -755,21 +771,8 @@ namespace hwstl {
 
         #undef MAKE_CONFIG_STREAM_MODIFIER
 
-        template <class t_value_type, uint32_t t_key, t_value_type t_value>
-        class constant_pair {
-        public:
-            static constexpr uint32_t key = t_key;
-            static constexpr t_value_type value = t_value;
-        };
-
-        template <uint32_t t_key, bool t_value>
-        using bool_pair = constant_pair<bool, t_key, t_value>;
-
-        template <uart_port::peripheral t_uart, class... vt_pairs>
-        class masks;
-
         template <class... vt_pairs>
-        class masks<uart_port::peripheral::uart, vt_pairs...> {
+        class masks<uart_port::peripheral, uart_port::peripheral::uart, vt_pairs...> {
         public:
             template <uint32_t t_key, bool t_value>
             void setup() {
@@ -787,9 +790,6 @@ namespace hwstl {
                     PMC->PMC_PCER0 = 0x01 << ID_UART;
                     ResetTRX(UART);
                     EnableBaud<MainClockFrequency, 115200>(UART);
-
-                    // Disable all interrupts.	  
-                    UART->UART_IDR = 0xFFFFFFFF;   
                     
                     EnableTRX(UART);
                 } else if constexpr (t_key == Disable) {
@@ -801,15 +801,37 @@ namespace hwstl {
                     // Disable clock to the UART
                     PMC->PMC_PCER0 = 0x01 << ID_UART;
                 } else if constexpr (t_key == EvenParity) {
-
+                    UART->UART_MR = UART_MR_PAR_EVEN;
                 } else if constexpr (t_key == OddParity) {
-
+                    UART->UART_MR = UART_MR_PAR_ODD;
                 } else if constexpr (t_key == SpaceParity) {
-
+                    UART->UART_MR = UART_MR_PAR_SPACE;
                 } else if constexpr (t_key == MarkParity) {
-
+                    UART->UART_MR = UART_MR_PAR_MARK;
                 } else if constexpr (t_key == NoParity) {
-
+                    UART->UART_MR = UART_MR_PAR_NO;
+                } else if constexpr (t_key == DisableInterrupts) {  
+                    UART->UART_IDR = 0xFFFFFFFF;
+                } else if constexpr (t_key == EnableRxReady) {
+                    // Unimplemented
+                } else if constexpr (t_key = EnableTxReady) {
+                    // Unimplemented
+                } else if constexpr (EnableEndOfReceiveTransfer) {
+                    // Unimplemented
+                } else if constexpr (EnableEndOfTransmit) {
+                    // Unimplemented
+                } else if constexpr (EnableOverrunError) {
+                    // Unimplemented
+                } else if constexpr (EnableFramingError) {
+                    // Unimplemented
+                } else if constexpr (EnableParityError) {
+                    // Unimplemented
+                } else if constexpr (EnableTxEmpty) {
+                    // Unimplemented
+                } else if constexpr (EnableBufferEmpty) {
+                    // Unimplemented
+                } else if constexpr (EnableBufferFull) {
+                    // Unimplemented
                 }
             }
 
@@ -817,118 +839,6 @@ namespace hwstl {
                 (setup<vt_pairs::key, vt_pairs::value>(), ...);
             }
         };
-
-        template <class t_ios, uart_port::peripheral t_peripheral, class... vt_pairs>
-        class _hwconfig;
-
-        /**
-         * @brief Internal _hwconfig class with config pairs
-         * 
-         * @details
-         * Internal _hwconfig class. This class provides get<{int}> for looking
-         * up a pair during compile time.
-         * 
-         * If this class is destructed, the config pairs are passed into a
-         * setup routine. This routine should evaluate the pairs into
-         * the minimum required register IO to configure the underlying
-         * peripheral. 
-         * 
-         * @tparam t_ios iostream to configure
-         * @tparam t_peripheral Peripheral to configure
-         * @tparam t_key Key of the next item in the map
-         * @tparam t_value Value of the next item in the map
-         * @tparam vt_pairs Tailing config pairs in the map 
-         */
-        template <class t_ios, uart_port::peripheral t_peripheral, uint32_t t_key, bool t_value, class... vt_pairs>
-        class _hwconfig<t_ios, t_peripheral, bool_pair<t_key, t_value>, vt_pairs...> {
-            template <uint32_t t_lookup_key>
-            class get {
-            public:
-                static constexpr bool value = (t_lookup_key == t_key) ? t_value : _hwconfig<t_ios, t_peripheral, vt_pairs...>::template get<t_lookup_key>::value;
-            };
-
-        public:
-            bool destruct = true;
-
-            constexpr _hwconfig() { }
-
-            ~_hwconfig() {
-                if (destruct) {
-                    masks<t_peripheral, bool_pair<t_key, t_value>, vt_pairs...> m;
-                    m.apply();
-                }
-            }
-        };
-
-        /**
-         * @brief Internal _hwconfig class
-         * 
-         * @deteails
-         * Internal _hwconfig class. This class provides the default get<{int}>
-         * by defining a specialization for for a _hwconfig without config
-         * pairs. 
-         * 
-         * @tparam t_ios iostream to configure
-         * @tparam t_peripheral Peripheral to configure
-         */
-        template <class t_ios, uart_port::peripheral t_peripheral>
-        class _hwconfig<t_ios, t_peripheral> {
-            template <uint32_t t_lookup_key>
-            class get {
-            public:
-                static constexpr bool value = false;
-            };
-
-        public:
-            bool destruct = true;
-
-            constexpr _hwconfig() { }
-        };
-
-        /**
-         * @brief Compile time << operator
-         * 
-         * @details
-         * Applies the manipulator to the underlying hardware peripheral of the
-         * iostream wrapped by hwconfig. Register IO is combined as much as
-         * possible in order to improve run-time efficiency and code size.
-         * 
-         * @param config_os Configuring ostream
-         * @param conf Config item <<'ed into hwconfig
-         * @return hwconfig
-         */
-        template <
-            class t_origin_ios,
-            uart_port::peripheral t_peripheral,
-            template <class, uart_port::peripheral, class...> class t_config_os,
-            uint32_t t_applied_setting,
-            class... t_pairs
-        >
-        constexpr auto operator<< (t_config_os<t_origin_ios, t_peripheral, t_pairs...>&& config_os, const std::integral_constant<uint32_t, t_applied_setting> conf) {
-            // Prevent multiple register writes by unsetting the destruct flag
-            config_os.destruct = false;
-            return _hwconfig<decltype(config_os), t_peripheral, bool_pair<t_applied_setting, true>>();
-        }
-
-        /**
-         * @brief Generates a config ostream allowing for configuring streams
-         * 
-         * @details
-         * Constructs a config ostream class which allows for compile time
-         * optimized configuring for stream based peripherals.
-         * 
-         * @param ios Stream to configure
-         * @return _hwconfig
-         */
-        template <
-            class t_peripheral_type,
-            t_peripheral_type t_peripheral,
-            template < t_peripheral_type > class t_impl,
-            template < class > class t_ios
-        >
-        auto hwconfig(t_ios<t_impl<t_peripheral>>& ios) {
-            return _hwconfig<t_ios<t_impl<t_peripheral>>, t_peripheral>();
-        }
 
         template <uart_port::peripheral t_uart>
         class uart_impl;
