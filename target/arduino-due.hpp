@@ -736,13 +736,22 @@ namespace hwstl {
 
         #define MAKE_CONFIG_STREAM_MODIFIER(name) static constexpr std::integral_constant<uint32_t, __COUNTER__> name = { }
 
+        // Power control
         MAKE_CONFIG_STREAM_MODIFIER(Enable);
         MAKE_CONFIG_STREAM_MODIFIER(Disable);
+
+        // Parity
         MAKE_CONFIG_STREAM_MODIFIER(EvenParity);
         MAKE_CONFIG_STREAM_MODIFIER(OddParity);
         MAKE_CONFIG_STREAM_MODIFIER(SpaceParity);
         MAKE_CONFIG_STREAM_MODIFIER(MarkParity);
         MAKE_CONFIG_STREAM_MODIFIER(NoParity);
+
+        // Channels
+        MAKE_CONFIG_STREAM_MODIFIER(ChannelNormal);
+        MAKE_CONFIG_STREAM_MODIFIER(ChannelAutomatic);
+        MAKE_CONFIG_STREAM_MODIFIER(ChannelLocalLoopback);
+        MAKE_CONFIG_STREAM_MODIFIER(ChannelRemoteLoopback);
 
         #undef MAKE_CONFIG_STREAM_MODIFIER
 
