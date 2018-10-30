@@ -3,45 +3,31 @@
 #include <utility>
 
 namespace hwstl {
+    // TODO: Include header with uint32_t
     using uint32_t = long unsigned int;
 
     /**
-     * @brief Compile time map pair
+     * @brief setting_param
      * 
-     * @tparam t_value_type 
-     * @tparam t_key 
-     * @tparam t_value 
-     */
-    template <class t_value_type, uint32_t t_key, t_value_type t_value>
-    class constant_pair {
-    public:
-        static constexpr uint32_t key = t_key;
-        static constexpr t_value_type value = t_value;
-    };
-
-    /**
-     * @brief Boolean alias for constant_pair
+     * @details
+     * Compile time constant settings parameter passed into hwconfig
      * 
      * @tparam t_key 
      * @tparam t_value 
      */
     template <uint32_t t_key, bool t_value>
-    using bool_pair = constant_pair<bool, t_key, t_value>;
-
-    template <
-        class t_peripheral_type,
-        t_peripheral_type t_peripheral,
-        template <class, t_peripheral_type, class...> class t_applicator,
-        class... vt_pairs
-    >
-    class _hwconfig;
+    class setting_params {
+    public:
+        static constexpr uint32_t key = t_key;
+        static constexpr bool value = t_value;
+    };
 
     /**
      * @brief Internal _hwconfig class with config pairs
      * 
      * @details
-     * Internal _hwconfig class. This class provides get<{int}> for looking
-     * up a pair during compile time.
+     * Internal _hwconfig class. The first pair is internally known as t_key
+     * and t_value. The rest of the pairs are put in vt_pairs.
      * 
      * If this class is destructed, the config pairs are passed into a
      * setup routine. This routine should evaluate the pairs into
@@ -58,28 +44,9 @@ namespace hwstl {
         class t_peripheral_type,
         t_peripheral_type t_peripheral,
         template <class, t_peripheral_type, class...> class t_applicator,
-        uint32_t t_key,
-        bool t_value,
         class... vt_pairs
     >
-    class _hwconfig<
-        t_peripheral_type,
-        t_peripheral,
-        t_applicator,
-        bool_pair<t_key, t_value>,
-        vt_pairs...
-    > {
-        template <uint32_t t_lookup_key>
-        class get {
-        public:
-            static constexpr bool value = (t_lookup_key == t_key) ? t_value : _hwconfig<
-                t_peripheral_type,
-                t_peripheral,
-                t_applicator,
-                vt_pairs...
-            >::template get<t_lookup_key>::value;
-        };
-
+    class _hwconfig {
     public:
         bool destruct = true;
 
@@ -87,7 +54,7 @@ namespace hwstl {
 
         ~_hwconfig() {
             if (destruct) {
-                t_applicator<t_peripheral_type, t_peripheral, bool_pair<t_key, t_value>, vt_pairs...> applicator;
+                t_applicator<t_peripheral_type, t_peripheral, vt_pairs...> applicator;
                 applicator.apply();
             }
         }
@@ -97,9 +64,8 @@ namespace hwstl {
      * @brief Internal _hwconfig class
      * 
      * @deteails
-     * Internal _hwconfig class. This class provides the default get<{int}>
-     * by defining a specialization for for a _hwconfig without config
-     * pairs. 
+     * Internal _hwconfig class. This specialization is for a _hwconfig without
+     * config pairs. 
      * 
      * @tparam t_ios iostream to configure
      * @tparam t_peripheral Peripheral to configure
@@ -114,12 +80,6 @@ namespace hwstl {
         t_peripheral,
         t_applicator
     > {
-        template <uint32_t t_lookup_key>
-        class get {
-        public:
-            static constexpr bool value = false;
-        };
-
     public:
         bool destruct = true;
 
@@ -144,7 +104,8 @@ namespace hwstl {
         template <class, t_peripheral_type, class...> class t_applicator,
         template <class, t_peripheral_type, template <class, t_peripheral_type, class...> class, class...> class t_config_os,
         uint32_t t_applied_setting,
-        class... vt_pairs
+        class... vt_pairs,
+        class... vt_params
     >
     constexpr auto operator<< (
         t_config_os<
@@ -153,10 +114,10 @@ namespace hwstl {
             t_applicator,
             vt_pairs...
         >&& config_os,
-        const std::integral_constant<uint32_t, t_applied_setting> conf
+        const hwstl::target::constant_stream_manipulator<t_applied_setting, vt_params...> conf
     ) {
         // Prevent multiple register writes by unsetting the destruct flag
         config_os.destruct = false;
-        return _hwconfig<t_peripheral_type, t_peripheral, t_applicator, bool_pair<t_applied_setting, true>>();
+        return _hwconfig<t_peripheral_type, t_peripheral, t_applicator, setting_params<t_applied_setting, true>>();
     }
 }
