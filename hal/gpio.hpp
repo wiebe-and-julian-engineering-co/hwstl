@@ -17,6 +17,10 @@ namespace hwstl {
         void disable_pullup() {
             hwstl::target::pin::pin_impl<t_pin>::disable_pullup();
         }
+
+        void set_interrupt(const hwstl::target::interrupt::mode mode) {
+            hwstl::target::pin::pin_impl<t_pin>::set_interrupt(mode);
+        }
     };
 
     template <hwstl::pin_index t_pin>

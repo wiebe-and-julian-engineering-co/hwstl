@@ -3,6 +3,8 @@
 #include "../hal/iostream.hpp"
 #include "../hal/peripheral.hpp"
 #include "../hal/gpio.hpp"
+#include "../hal/internal.hpp"
+#include "../hal/interrupt.hpp"
 #include "type_definition.hpp"
 
 namespace hwstl {
@@ -10,6 +12,8 @@ namespace hwstl {
     static auto cin = hwstl::istream<hwstl::target::uart_io>();
     static const auto endl = '\n';
     static auto& cerr = cout;
+
+    static auto internals = hwstl::internal();
 
     // using iopin = hwstl::internal::iopin<hwstl::target::pin>;
     // using ipin = hwstl::internal::ipin<hwstl::target::pin>;

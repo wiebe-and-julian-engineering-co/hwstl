@@ -220,6 +220,12 @@
     <Compile Include="hal\streambuf.hpp">
       <SubType>compile</SubType>
     </Compile>
+    <Compile Include="hal\internal.hpp">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="hwstl.hpp">
+      <SubType>compile</SubType>
+    </Compile>
     <Compile Include="lib\IOPin\IOPin.cpp">
       <SubType>compile</SubType>
     </Compile>
