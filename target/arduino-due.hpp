@@ -5,17 +5,40 @@
 
 #pragma once
 
+
+
 #include <system_sam3xa.h>
 #include <sam3x8e.h>
 #include <tuple>
 #include <utility>
 #include <algorithm>
+#include "../hal/streambuf.hpp" // Should not be placed here
+
+static hwstl::streambuf_backend<150> uartReceiveBuffer;
+
+    static inline void HandleUARTInterrupt() {
+        uint32_t status = UART->UART_SR;
+
+        if ((status & UART_SR_RXRDY) == UART_SR_RXRDY) {
+            // Data received, store it. https://github.com/arduino/ArduinoCore-sam/blob/c893c62ec9953ed36a256b5243272fda2e473c14/cores/arduino/UARTClass.cpp
+            uartReceiveBuffer.add(UART->UART_RHR);
+        }
+    }
+
+void UART_Handler(void) __attribute__((weak)); // Set old one as weak.
+void UART_Handler(void) {
+    HandleUARTInterrupt();    
+}
+
+
 
 namespace hwstl {
     using pin_index = uint32_t;
 
     template <pin_index... vt_pins>
     using pin_sequence = std::integer_sequence<pin_index, vt_pins...>;
+
+
 
     namespace arduino_due {
         namespace internal {
@@ -218,6 +241,8 @@ namespace hwstl {
 #endif
         };
 
+
+
         /**
          * @brief Primary UART controller
          * 
@@ -227,6 +252,8 @@ namespace hwstl {
          */
         class uart_io {
         private:
+
+
             static constexpr uint32_t MainClockFrequency = 84000000;
 
             static constexpr int32_t FromFrequencyToPrescalerSelector(uint32_t main_clock_frequency) {
@@ -344,6 +371,17 @@ namespace hwstl {
                 PIOA->PIO_PDR = PIO_PA9; 
                 PIOA->PIO_ABSR &= ~PIO_PA9;
 
+                // Disable all interrupts.
+                //UART->UART_IDR = 0xFFFFFFFF;
+                                
+                // Enable receive interrupts.
+                NVIC_DisableIRQ(UART_IRQn);
+                NVIC_ClearPendingIRQ(UART_IRQn);
+                NVIC_SetPriority(UART_IRQn, 0);
+                NVIC_EnableIRQ(UART_IRQn);
+
+                UART->UART_IER = (0x01u); // Enable RXRDY interrupts, see section 34.6.3
+
                 // enable the clock to the UART
                 PMC->PMC_PCER0 = 0x01 << ID_UART;
 
@@ -355,8 +393,9 @@ namespace hwstl {
                 // No parity, normal channel mode.
                 UART->UART_MR = UART_MR_PAR_NO;
 
-                // Disable all interrupts.	  
-                UART->UART_IDR = 0xFFFFFFFF;   
+
+
+
 
                 EnableTRX();
             }
@@ -387,8 +426,16 @@ namespace hwstl {
              * @return unsigned char 
              */
             static inline unsigned char getc() {
-                while((UART->UART_SR & 1) == 0) { }
-                return UART->UART_RHR; 
+                if (uartReceiveBuffer.head == uartReceiveBuffer.tail) {
+                    return 0;
+                }
+
+                unsigned char data = uartReceiveBuffer.Buffer()[uartReceiveBuffer.head];
+
+                uartReceiveBuffer.tail = (uartReceiveBuffer.tail + 1) % uartReceiveBuffer.size();
+                //while((UART->UART_SR & 1) == 0) { }
+                //return UART->UART_RHR;
+                return data;
             }
 
             /**
@@ -402,8 +449,10 @@ namespace hwstl {
              */
             template <uint32_t t_timeout>
             static inline int32_t getc() {
-                while((UART->UART_SR & 1) == 0) { } // TODO: Check for timeout and return -1
-                return UART->UART_RHR;
+                //while((UART->UART_SR & 1) == 0) { } // TODO: Check for timeout and return -1
+               // return UART->UART_RHR;
+
+               return 0;
             }
 
             inline static void Configure()  { 
