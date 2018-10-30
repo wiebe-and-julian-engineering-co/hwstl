@@ -387,7 +387,7 @@ namespace hwstl {
              * @return unsigned char 
              */
             static inline unsigned char getc() {
-                while((UART->UART_SR & 1) == 1) { }
+                while((UART->UART_SR & 1) == 0) { }
                 return UART->UART_RHR; 
             }
 
@@ -402,7 +402,7 @@ namespace hwstl {
              */
             template <uint32_t t_timeout>
             static inline int32_t getc() {
-                while(UART->UART_SR & 1 == 1) { } // TODO: Check for timeout and return -1
+                while((UART->UART_SR & 1) == 0) { } // TODO: Check for timeout and return -1
                 return UART->UART_RHR;
             }
 
