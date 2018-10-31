@@ -5,6 +5,14 @@
 
 #include "arduino-due.hpp" 
 #include <sam3xa.h>
+
+extern void UART_Handler(void) {
+    uint32_t status = UART->UART_SR;
+
+    if ((status & UART_SR_RXRDY) == UART_SR_RXRDY) {
+        uartReceiveBuffer.add(UART->UART_RHR);
+    }
+}
  
 void hwstl::arduino_due::init() {
     SystemInit();

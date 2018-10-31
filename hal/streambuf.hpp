@@ -26,6 +26,7 @@ namespace hwstl {
 
         virtual BufferValue* Buffer() = 0;
         virtual void add(BufferValue val) = 0;
+        virtual BufferValue read() = 0;
         //virtual BufferValue get(unsigned int index) = 0;
         virtual size_t size() = 0;
     };
@@ -34,7 +35,7 @@ namespace hwstl {
     class streambuf_backend : public streambuf {
     public:
         using BufferValue = uint8_t;
-        volatile unsigned int head = 0, tail = 0;
+        volatile uint32_t head = 0, tail = 0;
 
     private:
         BufferValue m_buffer[t_buffer_len];
@@ -53,6 +54,18 @@ namespace hwstl {
                 m_buffer[head] = val;
                 head = i;
             }
+        }
+
+        BufferValue read() override {
+           if(tail == head) {
+            return -1;
+           }
+            
+
+            uint8_t value = m_buffer[tail];
+            tail = (uint32_t)(tail + 1) % t_buffer_len;
+
+          return value;
         }
 
         //BufferValue get(unsigned int index) override {

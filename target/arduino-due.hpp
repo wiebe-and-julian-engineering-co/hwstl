@@ -7,6 +7,7 @@
 
 
 
+
 #include <system_sam3xa.h>
 #include <sam3x8e.h>
 #include <tuple>
@@ -14,22 +15,20 @@
 #include <algorithm>
 #include "../hal/streambuf.hpp" // Should not be placed here
 
+
 static hwstl::streambuf_backend<150> uartReceiveBuffer;
+static hwstl::streambuf_backend<150> uartTransmitBuffer;
 
-    static inline void HandleUARTInterrupt() {
-        uint32_t status = UART->UART_SR;
 
-        if ((status & UART_SR_RXRDY) == UART_SR_RXRDY) {
-            // Data received, store it. https://github.com/arduino/ArduinoCore-sam/blob/c893c62ec9953ed36a256b5243272fda2e473c14/cores/arduino/UARTClass.cpp
-            uartReceiveBuffer.add(UART->UART_RHR);
-        }
-    }
+//void UART_Handler(void) __attribute__((weak)); // Set old one as weak.
 
-void UART_Handler(void) __attribute__((weak)); // Set old one as weak.
-void UART_Handler(void) {
-    HandleUARTInterrupt();    
-}
+//void UART_Handler(void) {
+    //uint32_t status = UART->UART_SR;
 
+
+//}
+
+void UART_Handler(void);
 
 
 namespace hwstl {
@@ -37,8 +36,6 @@ namespace hwstl {
 
     template <pin_index... vt_pins>
     using pin_sequence = std::integer_sequence<pin_index, vt_pins...>;
-
-
 
     namespace arduino_due {
         namespace internal {
@@ -371,8 +368,11 @@ namespace hwstl {
                 PIOA->PIO_PDR = PIO_PA9; 
                 PIOA->PIO_ABSR &= ~PIO_PA9;
 
+                  // Disable PDC channel
+                //UART->UART_PTCR = UART_PTCR_RXTDIS | UART_PTCR_TXTDIS;
+
                 // Disable all interrupts.
-                //UART->UART_IDR = 0xFFFFFFFF;
+                UART->UART_IDR = 0xFFFFFFFF;
                                 
                 // Enable receive interrupts.
                 NVIC_DisableIRQ(UART_IRQn);
@@ -380,7 +380,10 @@ namespace hwstl {
                 NVIC_SetPriority(UART_IRQn, 0);
                 NVIC_EnableIRQ(UART_IRQn);
 
-                UART->UART_IER = (0x01u); // Enable RXRDY interrupts, see section 34.6.3
+                UART->UART_IER = UART_IER_RXRDY  | UART_IER_OVRE; // Enable RXRDY interrupts, see section 34.6.3
+
+                uartReceiveBuffer.head = 0;
+                uartReceiveBuffer.tail = 0;
 
                 // enable the clock to the UART
                 PMC->PMC_PCER0 = 0x01 << ID_UART;
@@ -408,6 +411,8 @@ namespace hwstl {
 
                 // Disable clock to the UART
                 PMC->PMC_PCER0 = 0x01 << ID_UART;
+
+                NVIC_DisableIRQ(UART_IRQn);
             }
 
             /**
@@ -426,13 +431,20 @@ namespace hwstl {
              * @return unsigned char 
              */
             static inline unsigned char getc() {
+               
                 if (uartReceiveBuffer.head == uartReceiveBuffer.tail) {
-                    return 0;
+                   return 0;
                 }
 
-                unsigned char data = uartReceiveBuffer.Buffer()[uartReceiveBuffer.head];
+                //while (true) {};
 
-                uartReceiveBuffer.tail = (uartReceiveBuffer.tail + 1) % uartReceiveBuffer.size();
+                //putc(static_cast<unsigned char>(uartReceiveBuffer.head));
+
+                uint8_t data = uartReceiveBuffer.read();
+
+
+
+                //uartReceiveBuffer.tail = (uartReceiveBuffer.tail + 1) % uartReceiveBuffer.size();
                 //while((UART->UART_SR & 1) == 0) { }
                 //return UART->UART_RHR;
                 return data;

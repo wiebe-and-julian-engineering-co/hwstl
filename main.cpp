@@ -1,6 +1,7 @@
 #include "hwstl.hpp"
 
 void hwstl::main() {
+    WDT->WDT_MR = WDT_MR_WDDIS;
     hwstl::target::uart_io::Configure();
 
     auto [d13] = hwstl::make_opin(
@@ -13,15 +14,27 @@ void hwstl::main() {
 
 
     while (true) {
-        hwstl::cout << "Enter a character:" << hwstl::endl;
-        hwstl::wait_ms(50);
+        hwstl::cout << "Hello!" << hwstl::endl;
+        /**hwstl::wait_ms(50);
         signed char ch = 0;
         while (ch == 0) {
             hwstl::cin >> ch;
             hwstl::wait_ms(5);
         }
 
-        hwstl::cout << "Result: " << ch << hwstl::endl;
+        
+
+        hwstl::cout << "Result: " << ch << hwstl::endl;**/
+
+        unsigned char c = 0;
+
+        hwstl::cin >> c;
+
+        if (c != 0) {
+           hwstl::cout << "Data\n";
+           hwstl::cout << c;
+        }
+
         hwstl::wait_ms(1000);
     }
 }
