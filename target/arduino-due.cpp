@@ -15,11 +15,11 @@ void hwstl::arduino_due::uart_io::IRQHandler() {
     if ((status & UART_SR_RXRDY) == UART_SR_RXRDY) {
         uartReceiveBuffer.enqueue(UART->UART_RHR);
     }
-                        
+    
     if ((status & UART_SR_TXRDY) == UART_SR_TXRDY) {
         if (uartTransmitBuffer.size() > 0) {
-             UART->UART_THR = uartTransmitBuffer.dequeue();
-        } else {
+            UART->UART_THR = uartTransmitBuffer.dequeue();
+            } else {
             // Temp disable the interrupt, as we do not have to send anymore data.
             UART->UART_IDR = UART_IDR_TXRDY;
         }

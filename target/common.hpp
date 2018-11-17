@@ -20,12 +20,16 @@ namespace hwstl {
     // using ipin = hwstl::internal::ipin<hwstl::target::pin>;
     // using opin = hwstl::internal::opin<hwstl::target::pin>;
 
-    inline uint_fast64_t now_ticks() {
+    inline uint_fast64_t time_ticks() {
         return target::now_ticks();
     }
 
-    inline uint64_t now_us() {
+    inline uint64_t time_us() {
         return target::now_us();
+    }
+
+    inline uint32_t time_ms() {
+        return (target::now_us() / 1000);
     }
 
     inline void wait_us_busy(int_fast32_t n) {

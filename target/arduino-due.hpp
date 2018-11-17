@@ -15,23 +15,7 @@
 #include <algorithm>
 #include "../memory/ring_buffer.hpp" // Should not be placed here
 
-
-//static hwstl::streambuf_backend<150> uartReceiveBuffer;
-//static hwstl::streambuf_backend<150> uartTransmitBuffer;
-//void UART_Handler(void) __attribute__((weak)); // Set old one as weak.
-
-//void UART_Handler(void) {
-    //uint32_t status = UART->UART_SR;
-
-
-//}
-
-//extern hwstl::ring_buffer<uint8_t, 64> uartReceiveBuffer;
-//extern hwstl::ring_buffer<uint8_t, 64> uartTransmitBuffer;
-
 void UART_Handler(void);
-
-
 
 namespace hwstl {
     using pin_index = uint32_t;
@@ -253,7 +237,8 @@ namespace hwstl {
          */
         class uart_io {
         private:
-
+            static hwstl::ring_buffer<uint8_t, 64> uartReceiveBuffer;
+            static hwstl::ring_buffer<uint8_t, 64> uartTransmitBuffer;
 
             static constexpr uint32_t MainClockFrequency = 84000000;
 
@@ -362,10 +347,6 @@ namespace hwstl {
             }
 
         public:
-            static hwstl::ring_buffer<uint8_t, 64> uartReceiveBuffer;
-            static hwstl::ring_buffer<uint8_t, 64> uartTransmitBuffer;
-
-
             static inline void IRQHandler();
 
             static inline void Enable() {
@@ -400,9 +381,6 @@ namespace hwstl {
 
 
                 NVIC_EnableIRQ(UART_IRQn);
-
-                // Reset and disable receiver and transmitter.
-                // UART->UART_CR = UART_CR_RSTRX | UART_CR_RSTTX | UART_CR_RXDIS | UART_CR_TXDIS;
                 
                 EnableBaud<MainClockFrequency, 115200>();
 
@@ -461,8 +439,11 @@ namespace hwstl {
                     return 0;
                 }
 
-
                 return uartReceiveBuffer.dequeue();
+            }
+
+            static inline size_t available() {
+                return uartReceiveBuffer.size();
             }
 
             /**
