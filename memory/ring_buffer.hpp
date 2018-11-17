@@ -12,26 +12,11 @@
 #include <iterator>
 
 namespace hwstl {
-    template<size_t SIZE>
-    struct valid_ring_buffer
-    {
-        static const bool value = ((SIZE & (SIZE - 1)) == 0);
-    };
-
-    //template <class BUFFER_TYPE, size_t SIZE>
-   // class ring_buffer {
-
-   // };
-
-
     template <class BUFFER_TYPE, size_t SIZE>
     class ring_buffer {
     private:
         std::array<BUFFER_TYPE, SIZE> buffer;
 
-        // To allow the use to use one ring buffer for multiple purposes, we use an pointer to the array,
-        // instead of using a templated std::array<uint8_t, SIZE>
-        //std::unique_ptr<BUFFER_TYPE> buffer;
         volatile size_t head_index, tail_index;
 
         const uint32_t mask = SIZE - 1;
