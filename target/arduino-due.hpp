@@ -13,13 +13,11 @@
 #include <tuple>
 #include <utility>
 #include <algorithm>
-#include "../hal/streambuf.hpp" // Should not be placed here
+#include "../memory/ring_buffer.hpp" // Should not be placed here
 
 
-static hwstl::streambuf_backend<150> uartReceiveBuffer;
-static hwstl::streambuf_backend<150> uartTransmitBuffer;
-
-
+//static hwstl::streambuf_backend<150> uartReceiveBuffer;
+//static hwstl::streambuf_backend<150> uartTransmitBuffer;
 //void UART_Handler(void) __attribute__((weak)); // Set old one as weak.
 
 //void UART_Handler(void) {
@@ -28,7 +26,11 @@ static hwstl::streambuf_backend<150> uartTransmitBuffer;
 
 //}
 
+//extern hwstl::ring_buffer<uint8_t, 64> uartReceiveBuffer;
+//extern hwstl::ring_buffer<uint8_t, 64> uartTransmitBuffer;
+
 void UART_Handler(void);
+
 
 
 namespace hwstl {
@@ -36,6 +38,8 @@ namespace hwstl {
 
     template <pin_index... vt_pins>
     using pin_sequence = std::integer_sequence<pin_index, vt_pins...>;
+
+
 
     namespace arduino_due {
         namespace internal {
@@ -358,9 +362,18 @@ namespace hwstl {
             }
 
         public:
+            static hwstl::ring_buffer<uint8_t, 64> uartReceiveBuffer;
+            static hwstl::ring_buffer<uint8_t, 64> uartTransmitBuffer;
+
+
+            static inline void IRQHandler();
+
             static inline void Enable() {
                 // enable the clock to port A
-                PMC->PMC_PCER0 = 1 << ID_PIOA;
+                //PMC->PMC_PCER0 = 1 << ID_PIOA;
+
+                // enable the clock to the UART
+                PMC->PMC_PCER0 = 0x01 << ID_UART;
 
                 // disable PIO Control on PA9 and set up for Peripheral A
                 PIOA->PIO_PDR = PIO_PA8; 
@@ -369,7 +382,9 @@ namespace hwstl {
                 PIOA->PIO_ABSR &= ~PIO_PA9;
 
                   // Disable PDC channel
-                //UART->UART_PTCR = UART_PTCR_RXTDIS | UART_PTCR_TXTDIS;
+                UART->UART_PTCR = UART_PTCR_RXTDIS | UART_PTCR_TXTDIS;
+
+                ResetTRX();
 
                 // Disable all interrupts.
                 UART->UART_IDR = 0xFFFFFFFF;
@@ -378,26 +393,21 @@ namespace hwstl {
                 NVIC_DisableIRQ(UART_IRQn);
                 NVIC_ClearPendingIRQ(UART_IRQn);
                 NVIC_SetPriority(UART_IRQn, 0);
+                
+
+                UART->UART_IER = UART_IER_RXRDY; // Enable RXRDY interrupts, see section 34.6.3
+
+
+
                 NVIC_EnableIRQ(UART_IRQn);
-
-                UART->UART_IER = UART_IER_RXRDY  | UART_IER_OVRE; // Enable RXRDY interrupts, see section 34.6.3
-
-                uartReceiveBuffer.head = 0;
-                uartReceiveBuffer.tail = 0;
-
-                // enable the clock to the UART
-                PMC->PMC_PCER0 = 0x01 << ID_UART;
 
                 // Reset and disable receiver and transmitter.
                 // UART->UART_CR = UART_CR_RSTRX | UART_CR_RSTTX | UART_CR_RXDIS | UART_CR_TXDIS;
-                ResetTRX();
+                
                 EnableBaud<MainClockFrequency, 115200>();
 
                 // No parity, normal channel mode.
                 UART->UART_MR = UART_MR_PAR_NO;
-
-
-
 
 
                 EnableTRX();
@@ -409,9 +419,13 @@ namespace hwstl {
                 PIOA->PIO_PDR = PIO_PA8;
                 PIOA->PIO_PDR = PIO_PA9;
 
+                // Disable all interrupts.
+                UART->UART_IDR = 0xFFFFFFFF;
+
                 // Disable clock to the UART
                 PMC->PMC_PCER0 = 0x01 << ID_UART;
 
+                // Disable the IQR for the UART
                 NVIC_DisableIRQ(UART_IRQn);
             }
 
@@ -420,9 +434,21 @@ namespace hwstl {
              * 
              * @param c 
              */
-            static inline void putc(unsigned char c) {
-                while((UART->UART_SR & 2) == 0) { }
-                UART->UART_THR = c;
+            static void putc(const unsigned char c) {
+                //while((UART->UART_SR & 2) == 0) { }
+                //UART->UART_THR = c;
+
+                // If the UART controller is not busy, we send directly
+
+                if ((UART->UART_SR & UART_SR_TXRDY) == UART_SR_TXRDY) {
+                   UART->UART_THR = c;
+                } else {
+                    // We are busy, add to the queue.
+                    uartTransmitBuffer.enqueue(c);
+
+                    // Enable TXRDY interrupt.
+                    UART->UART_IER = UART_IER_TXRDY;
+                }
             }
 
             /**
@@ -431,23 +457,12 @@ namespace hwstl {
              * @return unsigned char 
              */
             static inline unsigned char getc() {
-               
-                if (uartReceiveBuffer.head == uartReceiveBuffer.tail) {
-                   return 0;
+                if (uartReceiveBuffer.size() == 0) {
+                    return 0;
                 }
 
-                //while (true) {};
 
-                //putc(static_cast<unsigned char>(uartReceiveBuffer.head));
-
-                uint8_t data = uartReceiveBuffer.read();
-
-
-
-                //uartReceiveBuffer.tail = (uartReceiveBuffer.tail + 1) % uartReceiveBuffer.size();
-                //while((UART->UART_SR & 1) == 0) { }
-                //return UART->UART_RHR;
-                return data;
+                return uartReceiveBuffer.dequeue();
             }
 
             /**

@@ -8,6 +8,7 @@
 #include "../hal/iostream.hpp"
 #include "../hal/peripheral.hpp"
 #include "../hal/gpio.hpp"
+#include "../memory/ring_buffer.hpp"
 
 namespace hwstl {
     static auto cout = hwstl::ostream<hwstl::target::uart_io>();

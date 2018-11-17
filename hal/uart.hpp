@@ -19,7 +19,7 @@ namespace hwstl {
             t_unset();
         }
 
-        inline void putc(unsigned char c) {
+        inline void putc(const unsigned char c) {
             putc(c);
         }
 
