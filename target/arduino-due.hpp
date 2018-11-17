@@ -67,7 +67,6 @@ namespace hwstl {
             };
 
             template <pin_index t_pin>
-            __attribute__((always_inline))
             static inline constexpr Pio* GetPortByPin() {
                 uint8_t port = pin_info_array[t_pin].m_port;
 
@@ -85,19 +84,16 @@ namespace hwstl {
             }
 
             template <pin_index t_pin>
-            __attribute__((always_inline))
             static inline constexpr uint32_t GetPinInPort() {
                 return pin_info_array[t_pin].m_pin;
             }
 
             template <pin_index t_pin>
-            __attribute__((always_inline))
             static inline constexpr uint32_t GetPinMask() {
                 return 1 << GetPinInPort<t_pin>();
             }
 
             template <pin_index t_pin>
-            __attribute__((always_inline))
             static inline int PinEnable() {
                 Pio* port = GetPortByPin<t_pin>();
                 uint32_t mask = 1 << GetPinInPort<t_pin>();
@@ -109,7 +105,6 @@ namespace hwstl {
             }
 
             template <pin_index t_pin>
-            __attribute__((always_inline))
             static inline constexpr void ProcessPinEntry(uint32_t masks[4]) {
                 uint8_t port = pin_info_array[t_pin].m_port;
 
@@ -125,7 +120,6 @@ namespace hwstl {
             }
 
             template <pin_index... vt_pins>
-            __attribute__((always_inline))
             static inline void PinSequenceEnable(pin_sequence<vt_pins...> pins) {
                 uint32_t masks[4]   = {};
                 uint32_t pmc0_enable = 0;
@@ -164,19 +158,16 @@ namespace hwstl {
             }
 
             template <pin_index... vt_pins>
-            __attribute__((always_inline))
             static inline void configure_in(pin_sequence<vt_pins...> pins) {
                 PinSequenceEnable(pins);
             }
 
             template <pin_index... vt_pins>
-            __attribute__((always_inline))
             static inline void configure_out(pin_sequence<vt_pins...> pins) {
                 PinSequenceEnable(pins);
             }
 
             template <pin_index... vt_pins>
-            __attribute__((always_inline))
             static inline void configure_inout(pin_sequence<vt_pins...> pins) {
                 PinSequenceEnable(pins);
             }
