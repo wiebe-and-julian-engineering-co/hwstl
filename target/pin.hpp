@@ -18,7 +18,8 @@ namespace hwstl {
     using pin_sequence = std::integer_sequence<pin_index, vt_pins...>;
     
     
-    namespace subframework {
+    namespace subframework{
+        template <class T>
         class pin {
         public:
             //extern static constexpr pin_info pin_info_array;
@@ -33,7 +34,8 @@ namespace hwstl {
 
             template <pin_index t_pin>
             static inline constexpr uint32_t GetPinInPort() {
-                return hwstl::device::pin::pin_info_array[t_pin].m_pin;
+                //return hwstl::device::pin::pin_info_array[t_pin].m_pin;
+                return T::pin::pin_info_array[t_pin].m_pin;
             }
 
             template <pin_index t_pin>
@@ -43,37 +45,37 @@ namespace hwstl {
 
             template <pin_index t_pin, class PORT_SUPER>
             static inline constexpr PORT_SUPER* GetPortByPin() {
-                return hwstl::device::pin::GetPortByPin();
+                return T::pin::GetPortByPin();
             }
 
             template <pin_index t_pin>
             static inline int PinEnable() {
-                return hwstl::device::pin::PinEnable();
+                return T::pin::PinEnable();
             }
 
             template <pin_index t_pin>
             static inline constexpr void ProcessPinEntry(uint32_t masks[4]) {
-                hwstl::device::pin::ProcessPinEntry(masks);
+                T::pin::ProcessPinEntry(masks);
             }
 
             template <pin_index... vt_pins>
             static inline void PinSequenceEnable(pin_sequence<vt_pins...> pins) {
-                hwstl::device::pin::PinSequenceEnable(pins);
+                T::pin::PinSequenceEnable(pins);
             }
 
             template <pin_index... vt_pins>
             static inline void configure_in(pin_sequence<vt_pins...> pins) {
-                hwstl::device::pin::PinSequenceEnable(pins);
+                T::pin::PinSequenceEnable(pins);
             }
 
             template <pin_index... vt_pins>
             static inline void configure_out(pin_sequence<vt_pins...> pins) {
-                hwstl::device::pin::PinSequenceEnable(pins);
+               T::pin::PinSequenceEnable(pins);
             }
 
             template <pin_index... vt_pins>
             static inline void configure_inout(pin_sequence<vt_pins...> pins) {
-                hwstl::device::pin::PinSequenceEnable(pins);
+                T::pin::PinSequenceEnable(pins);
             }
 
             template <pin_index t_pin>
@@ -84,7 +86,7 @@ namespace hwstl {
                 constexpr pin_impl() { }
 
                 static inline void set(bool v) {
-                    hwstl::device::set<t_pin>(v);
+                    T::set<t_pin>(v);
                 }
 
                 static inline bool get() {

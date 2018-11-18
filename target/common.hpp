@@ -27,6 +27,6 @@ namespace hwstl {
 
 int main() {
     //hwstl::target::init();
-    hwstl::device::init();
+    hwstl::target::init();
     hwstl::main();
 }

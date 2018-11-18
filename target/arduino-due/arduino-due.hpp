@@ -19,10 +19,6 @@
 void UART_Handler(void);
 
 namespace hwstl {
-
-
-
-
     namespace arduino_due {
         namespace internal {
 
@@ -30,7 +26,7 @@ namespace hwstl {
 
         void init();
         
-        class pin : hwstl::subframework::pin<pin> {
+        class pin : public hwstl::subframework::pin<pin> {
             public:
 
                 static constexpr pin_info pin_info_array[21] = {

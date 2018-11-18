@@ -3,12 +3,13 @@
 
 
 #if TARGET == arduino_due
+
 #include "arduino-due/arduino-due.hpp"
 
 namespace hwstl {
-    
-    namespace target = hwstl::subframework;
-    namespace device = hwstl::arduino_due;
+    //namespace device = hwstl::arduino_due;
+    namespace target = hwstl::arduino_due;
+    namespace sf = hwstl::subframework;
     
     //namespace target = hwstl::arduino_due;
     //namespace target::pin = hwstl::subframework::pin<hwstl::arduino_due>;
