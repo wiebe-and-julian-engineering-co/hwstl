@@ -2,39 +2,35 @@
 
 void hwstl::main() {
     WDT->WDT_MR = WDT_MR_WDDIS;
-    hwstl::target::uart_io::Configure();
+    //hwstl::target::uart_io::Configure();
 
     auto [d13] = hwstl::make_opin(
-        hwstl::target::pin::d13
+        hwstl::pins::d13
     );
     
     auto [d7] = hwstl::make_ipin(
-        hwstl::target::pin::d7
+        hwstl::pins::d7
     );
 
+    while (true) {
+        (void) d13.set(true);
+    }
+    //hwstl::wait_ms(200);
+    /**hwstl::cout << "Hello!" << hwstl::endl;
+
+    auto &stream = hwstl::cin;
+
+    size_t available = 0;
+    uint32_t lastTime = hwstl::time_ms();
 
     while (true) {
-        hwstl::cout << "Hello!" << hwstl::endl;
-        /**hwstl::wait_ms(50);
-        signed char ch = 0;
-        while (ch == 0) {
-            hwstl::cin >> ch;
-            hwstl::wait_ms(5);
+        if (stream.available()) {
+            while (stream.available() > 0) {
+                hwstl::cout << stream.getc();
+            }
         }
-
-        
-
-        hwstl::cout << "Result: " << ch << hwstl::endl;**/
-
-        unsigned char c = 0;
-
-        hwstl::cin >> c;
-
-        if (c != 0) {
-           hwstl::cout << "Data\n";
-           hwstl::cout << c;
-        }
-
-        hwstl::wait_ms(1000);
-    }
+       
+        //lastTime = hwstl::time_ms();
+        hwstl::wait_ms(5000);
+    }**/
 }

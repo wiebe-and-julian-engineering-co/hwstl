@@ -13,15 +13,13 @@
 #include <tuple>
 #include <utility>
 #include <algorithm>
-#include "../memory/ring_buffer.hpp" // Should not be placed here
+#include "../../memory/ring_buffer.hpp" // Should not be placed here
+#include "../subframework.hpp"
 
 void UART_Handler(void);
 
 namespace hwstl {
-    using pin_index = uint32_t;
 
-    template <pin_index... vt_pins>
-    using pin_sequence = std::integer_sequence<pin_index, vt_pins...>;
 
 
 
@@ -31,154 +29,119 @@ namespace hwstl {
         };
 
         void init();
-
-        namespace pin {
-            class pin_info {
+        
+        class pin : hwstl::subframework::pin<pin> {
             public:
-                uint8_t m_port;
-                uint8_t m_pin;
 
-                constexpr pin_info(uint8_t port, uint8_t pin) : m_port(port), m_pin(pin) { }
-            };
+                static constexpr pin_info pin_info_array[21] = {
+                    { 0,  8 },  // d0
+                    { 0,  9 },  // d1
+                    { 1, 25 },  // d2
+                    { 2, 28 },  // d3
+                    { 2, 26 },  // d4
+                    { 2, 25 },  // d5
+                    { 2, 24 },  // d6
+                    { 2, 23 },  // d7
+                    { 2, 22 },  // d8
+                    { 2, 21 },  // d9
+                    { 2, 29 },  // d10
 
-            static constexpr pin_info pin_info_array[21] = {
-                { 0,  8 },  // d0
-                { 0,  9 },  // d1
-                { 1, 25 },  // d2
-                { 2, 28 },  // d3
-                { 2, 26 },  // d4
-                { 2, 25 },  // d5
-                { 2, 24 },  // d6
-                { 2, 23 },  // d7
-                { 2, 22 },  // d8
-                { 2, 21 },  // d9
-                { 2, 29 },  // d10
+                    { 3,  7 },  // d11
+                    { 3,  8 },  // d12
+                    { 1, 27 },  // d13
+                    { 3,  4 },  // d14
+                    { 3,  5 },  // d15
+                    { 0, 13 },  // d16
+                    { 0, 12 },  // d17
+                    { 0, 11 },  // d18
+                    { 0, 10 },  // d19
+                    { 1, 12 },  // d20
+                };
 
-                { 3,  7 },  // d11
-                { 3,  8 },  // d12
-                { 1, 27 },  // d13
-                { 3,  4 },  // d14
-                { 3,  5 },  // d15
-                { 0, 13 },  // d16
-                { 0, 12 },  // d17
-                { 0, 11 },  // d18
-                { 0, 10 },  // d19
-                { 1, 12 },  // d20
-            };
+                template <pin_index t_pin, class PORT_SUPER>
+                static inline constexpr PORT_SUPER* GetPortByPin() {
+                    uint8_t port = pin_info_array[t_pin].m_port;
 
-            template <pin_index t_pin>
-            static inline constexpr Pio* GetPortByPin() {
-                uint8_t port = pin_info_array[t_pin].m_port;
-
-                if (port == 0) {
-                    return PIOA;
-                } else if (port == 1) {
-                    return PIOB;
-                } else if (port == 2) {
-                    return PIOC;
-                } else if (port == 3) {
-                    return PIOD;
-                } else {
-                    return nullptr;
-                }
-            }
-
-            template <pin_index t_pin>
-            static inline constexpr uint32_t GetPinInPort() {
-                return pin_info_array[t_pin].m_pin;
-            }
-
-            template <pin_index t_pin>
-            static inline constexpr uint32_t GetPinMask() {
-                return 1 << GetPinInPort<t_pin>();
-            }
-
-            template <pin_index t_pin>
-            static inline int PinEnable() {
-                Pio* port = GetPortByPin<t_pin>();
-                uint32_t mask = 1 << GetPinInPort<t_pin>();
-
-                port->PIO_PER = mask;
-                port->PIO_OER = mask;
-
-                return 1;
-            }
-
-            template <pin_index t_pin>
-            static inline constexpr void ProcessPinEntry(uint32_t masks[4]) {
-                uint8_t port = pin_info_array[t_pin].m_port;
-
-                if (port == 0) {
-                    masks[0] |= GetPinMask<t_pin>(); 
-                } else if (port == 1) {
-                    masks[1] |= GetPinMask<t_pin>(); 
-                } else if (port == 2) {
-                    masks[2] |= GetPinMask<t_pin>();
-                } else if (port == 3) {
-                    masks[3] |= GetPinMask<t_pin>();
-                }
-            }
-
-            template <pin_index... vt_pins>
-            static inline void PinSequenceEnable(pin_sequence<vt_pins...> pins) {
-                uint32_t masks[4]   = {};
-                uint32_t pmc0_enable = 0;
-
-                (ProcessPinEntry<vt_pins>(masks), ...);
-
-                if (masks[0]) {
-                    pmc0_enable   |= (1 << 11);
-
-                    PIOA->PIO_PER = masks[0];
-                    PIOA->PIO_OER = masks[0];
+                    if (port == 0) {
+                        return PIOA;
+                    } else if (port == 1) {
+                        return PIOB;
+                    } else if (port == 2) {
+                        return PIOC;
+                    } else if (port == 3) {
+                        return PIOD;
+                    } else {
+                        return nullptr;
+                    }
                 }
 
-                if (masks[1]) {
-                    pmc0_enable   |= (1 << 12);
+                template <pin_index t_pin>
+                static inline int PinEnable() {
+                    Pio* port = GetPortByPin<t_pin>();
+                    uint32_t mask = 1 << GetPinInPort<t_pin>();
 
-                    PIOB->PIO_PER = masks[1];
-                    PIOB->PIO_OER = masks[1];
+                    port->PIO_PER = mask;
+                    port->PIO_OER = mask;
+
+                    return 1;
                 }
+
+                template <pin_index t_pin>
+                static inline constexpr void ProcessPinEntry(uint32_t masks[4]) {
+                    uint8_t port = pin_info_array[t_pin].m_port;
+
+                    if (port == 0) {
+                        masks[0] |= hwstl::subframework::pin<pin>::GetPinMask<t_pin>(); 
+                    } else if (port == 1) {
+                        masks[1] |= hwstl::subframework::pin<pin>::GetPinMask<t_pin>(); 
+                    } else if (port == 2) {
+                        masks[2] |= hwstl::subframework::pin<pin>::GetPinMask<t_pin>();
+                    } else if (port == 3) {
+                        masks[3] |= hwstl::subframework::pin<pin>::GetPinMask<t_pin>();
+                    }
+                }
+
+                template <pin_index... vt_pins>
+                static inline void PinSequenceEnable(pin_sequence<vt_pins...> pins) {
+                    uint32_t masks[4]   = {};
+                    uint32_t pmc0_enable = 0;
+
+                    (ProcessPinEntry<vt_pins>(masks), ...);
+
+                    if (masks[0]) {
+                        pmc0_enable   |= (1 << 11);
+
+                        PIOA->PIO_PER = masks[0];
+                        PIOA->PIO_OER = masks[0];
+                    }
+
+                    if (masks[1]) {
+                        pmc0_enable   |= (1 << 12);
+
+                        PIOB->PIO_PER = masks[1];
+                        PIOB->PIO_OER = masks[1];
+                    }
                 
-                if (masks[2]) {
-                    pmc0_enable   |= (1 << 13);
+                    if (masks[2]) {
+                        pmc0_enable   |= (1 << 13);
 
-                    PIOC->PIO_PER = masks[2];
-                    PIOC->PIO_OER = masks[2];
+                        PIOC->PIO_PER = masks[2];
+                        PIOC->PIO_OER = masks[2];
+                    }
+
+                    if (masks[3]) {
+                        pmc0_enable   |= (1 << 14);
+
+                        PIOD->PIO_PER = masks[3];
+                        PIOD->PIO_OER = masks[3];
+                    }
+
+                    PMC->PMC_PCER0 = pmc0_enable;
                 }
 
-                if (masks[3]) {
-                    pmc0_enable   |= (1 << 14);
 
-                    PIOD->PIO_PER = masks[3];
-                    PIOD->PIO_OER = masks[3];
-                }
-
-                PMC->PMC_PCER0 = pmc0_enable;
-            }
-
-            template <pin_index... vt_pins>
-            static inline void configure_in(pin_sequence<vt_pins...> pins) {
-                PinSequenceEnable(pins);
-            }
-
-            template <pin_index... vt_pins>
-            static inline void configure_out(pin_sequence<vt_pins...> pins) {
-                PinSequenceEnable(pins);
-            }
-
-            template <pin_index... vt_pins>
-            static inline void configure_inout(pin_sequence<vt_pins...> pins) {
-                PinSequenceEnable(pins);
-            }
-
-            template <pin_index t_pin>
-            class pin_impl {
-            public:
-                static constexpr pin_index pin = t_pin;
-
-                constexpr pin_impl() { }
-
+                
+                template <pin_index t_pin>
                 static inline void set(bool v) {
                     Pio* port = GetPortByPin<t_pin>();
                     uint32_t mask = GetPinMask<t_pin>();
@@ -186,6 +149,7 @@ namespace hwstl {
                     (v ? port->PIO_SODR : port->PIO_CODR) = mask;
                 }
 
+                template <pin_index t_pin>
                 static inline bool get() {
                     Pio* port = GetPortByPin<t_pin>();
                     uint32_t mask = GetPinMask<t_pin>();
@@ -193,29 +157,48 @@ namespace hwstl {
                     return (port->PIO_PDSR & mask) != 0;
                 }
 
-                static inline void enable_pullup() {
-                    Pio* port = GetPortByPin<t_pin>();
-                    uint32_t mask = GetPinMask<t_pin>();
-                    
-                    port->PIO_PUER = mask;	
-                }
+                /**
+                template <pin_index t_pin>
+                class pin_impl {
+                    public:
+                    static constexpr pin_index pin = t_pin;
 
-                static inline void disable_pullup() {
-                    Pio* port = GetPortByPin<t_pin>();
-                    uint32_t mask = GetPinMask<t_pin>();
-                    
-                    port->PIO_PUDR = mask;
-                }
+                    constexpr pin_impl() { }
+
+                    static inline void set(bool v) {
+                        Pio* port = GetPortByPin<t_pin>();
+                        uint32_t mask = GetPinMask<t_pin>();
+
+                        (v ? port->PIO_SODR : port->PIO_CODR) = mask;
+                    }
+
+                    static inline bool get() {
+                        Pio* port = GetPortByPin<t_pin>();
+                        uint32_t mask = pin::GetPinMask<t_pin>();
+
+                        return (port->PIO_PDSR & mask) != 0;
+                    }
+
+                    static inline void enable_pullup() {
+                        Pio* port = GetPortByPin<t_pin>();
+                        uint32_t mask = pin::GetPinMask<t_pin>();
+                        
+                        port->PIO_PUER = mask;
+                    }
+
+                    static inline void disable_pullup() {
+                        Pio* port = GetPortByPin<t_pin>();
+                        uint32_t mask = pin::GetPinMask<t_pin>();
+                        
+                        port->PIO_PUDR = mask;
+                    }
+                };**/
+
             };
 
-#ifdef HWSTL_ONCE
-            auto d0 = pin_impl<0>();
-            auto d1 = pin_impl<1>();
-            auto d2 = pin_impl<2>();
-            auto d7 = pin_impl<7>();
-            auto d13 = pin_impl<13>();
-#endif
-        };
+
+
+
 
 
 

@@ -11,43 +11,22 @@
 #include "../memory/ring_buffer.hpp"
 
 namespace hwstl {
-    static auto cout = hwstl::ostream<hwstl::target::uart_io>();
-    static auto cin = hwstl::istream<hwstl::target::uart_io>();
+    //static auto cout = hwstl::ostream<hwstl::target::uart_io>();
+    //static auto cin = hwstl::istream<hwstl::target::uart_io>();
     static const auto endl = '\n';
-    static auto& cerr = cout;
+    //static auto& cerr = cout;
 
     // using iopin = hwstl::internal::iopin<hwstl::target::pin>;
     // using ipin = hwstl::internal::ipin<hwstl::target::pin>;
     // using opin = hwstl::internal::opin<hwstl::target::pin>;
 
-    inline uint_fast64_t time_ticks() {
-        return target::now_ticks();
-    }
 
-    inline uint64_t time_us() {
-        return target::now_us();
-    }
-
-    inline uint32_t time_ms() {
-        return (target::now_us() / 1000);
-    }
-
-    inline void wait_us_busy(int_fast32_t n) {
-        target::wait_us_busy(n);
-    }
-
-    inline void wait_us(int_fast32_t n) {
-        target::wait_us_busy(n);
-    }
-
-    inline void wait_ms(int_fast32_t n) {
-        target::wait_ms(n);
-    }
 
     void main();
 } // namespace hwstl
 
 int main() {
-    hwstl::target::init();
+    //hwstl::target::init();
+    hwstl::device::init();
     hwstl::main();
 }

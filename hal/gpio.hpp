@@ -12,15 +12,15 @@ namespace hwstl {
     class ipin {
     public:
         bool get() {
-            return hwstl::target::pin::pin_impl<t_pin>::get();
+            return hwstl::target::pin<hwstl::device::pin>::pin_impl<t_pin>::get();
         }
 
         void enable_pullup() {
-            hwstl::target::pin::pin_impl<t_pin>::enable_pullup();
+            hwstl::target::pin<hwstl::device::pin>::pin_impl<t_pin>::enable_pullup();
         }
 
         void disable_pullup() {
-            hwstl::target::pin::pin_impl<t_pin>::disable_pullup();
+            hwstl::target::pin<hwstl::device::pin>::pin_impl<t_pin>::disable_pullup();
         }
     };
 
@@ -28,7 +28,7 @@ namespace hwstl {
     class opin {
     public:
         void set(bool v) {
-            hwstl::target::pin::pin_impl<t_pin>::set(v);
+            hwstl::target::pin<hwstl::device::pin>::pin_impl<t_pin>::set(v);
         }
     };
 
@@ -36,8 +36,8 @@ namespace hwstl {
     class iopin : public ipin<t_pin>, public opin<t_pin> { };
 
     template <hwstl::pin_index... vt_pins>
-    auto make_ipin(hwstl::target::pin::pin_impl<vt_pins>... opins) {
-        hwstl::target::pin::configure_in(hwstl::pin_sequence<vt_pins...>());
+    auto make_ipin(hwstl::target::pin<hwstl::device::pin>::pin_impl<vt_pins>... opins) {
+        hwstl::target::pin<hwstl::device::pin>::configure_in(hwstl::pin_sequence<vt_pins...>());
 
         return std::tuple(
             hwstl::ipin<vt_pins>()...
@@ -45,8 +45,8 @@ namespace hwstl {
     }
 
     template <hwstl::pin_index... vt_pins>
-    auto make_opin(hwstl::target::pin::pin_impl<vt_pins>... opins) {
-        hwstl::target::pin::configure_out(hwstl::pin_sequence<vt_pins...>());
+    auto make_opin(hwstl::target::pin<hwstl::device::pin>::pin_impl<vt_pins>... opins) {
+        hwstl::target::pin<hwstl::device::pin>::configure_out(hwstl::pin_sequence<vt_pins...>());
 
         return std::tuple(
             hwstl::opin<vt_pins>()...
@@ -54,7 +54,7 @@ namespace hwstl {
     }
 
     template <hwstl::pin_index... vt_pins>
-    auto make_iopin(hwstl::target::pin::pin_impl<vt_pins>... opins) {
+    auto make_iopin(hwstl::target::pin<hwstl::device::pin>::pin_impl<vt_pins>... opins) {
         // hwstl::target::pin::configure_inout(hwstl::pin_sequence<vt_pins...>());
 
         return std::tuple(

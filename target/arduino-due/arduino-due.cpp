@@ -9,6 +9,8 @@
 hwstl::ring_buffer<uint8_t, 64> hwstl::arduino_due::uart_io::uartReceiveBuffer;
 hwstl::ring_buffer<uint8_t, 64> hwstl::arduino_due::uart_io::uartTransmitBuffer;
 
+
+
 void hwstl::arduino_due::uart_io::IRQHandler() {
     uint32_t status = UART->UART_SR;
 
