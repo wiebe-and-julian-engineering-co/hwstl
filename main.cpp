@@ -14,23 +14,6 @@ void hwstl::main() {
 
     while (true) {
         (void) d13.set(true);
+        (void) d7.get();
     }
-    //hwstl::wait_ms(200);
-    /**hwstl::cout << "Hello!" << hwstl::endl;
-
-    auto &stream = hwstl::cin;
-
-    size_t available = 0;
-    uint32_t lastTime = hwstl::time_ms();
-
-    while (true) {
-        if (stream.available()) {
-            while (stream.available() > 0) {
-                hwstl::cout << stream.getc();
-            }
-        }
-       
-        //lastTime = hwstl::time_ms();
-        hwstl::wait_ms(5000);
-    }**/
 }
