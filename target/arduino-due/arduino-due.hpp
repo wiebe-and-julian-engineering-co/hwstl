@@ -27,14 +27,6 @@ namespace hwstl {
 
         void init();
 
-        class pin_info {
-        public:
-            uint8_t m_port;
-            uint8_t m_pin;
-
-            constexpr pin_info(uint8_t port, uint8_t pin) : m_port(port), m_pin(pin) { }
-        };
-
         namespace pins {
             static constexpr auto d0 = pin_definition<0>();
             static constexpr auto d1 = pin_definition<1>();
@@ -61,7 +53,7 @@ namespace hwstl {
         namespace pin {
             using namespace hwstl::interface_contracts::pin;
 
-            static constexpr pin_info pin_info_array[21] = {
+            static constexpr hwstl::pin_info pin_info_array[21] = {
                 { 0,  8 },  // d0
                 { 0,  9 },  // d1
                 { 1, 25 },  // d2
@@ -208,41 +200,21 @@ namespace hwstl {
                 return (port->PIO_PDSR & mask) != 0;
             }
 
-            // template <pin_index t_pin>
-            // class pin_impl {
-            //     public:
-            //     static constexpr pin_index pin = t_pin;
+            template <pin_index t_pin>
+            static inline void enable_pullup() {
+                Pio* port = get_port_from_pin<t_pin>();
+                uint32_t mask = get_pin_mask<t_pin>();
+                
+                port->PIO_PUER = mask;
+            }
 
-            //     constexpr pin_impl() { }
-
-            //     static inline void set(bool v) {
-            //         Pio* port = GetPortByPin<t_pin>();
-            //         uint32_t mask = GetPinMask<t_pin>();
-
-            //         (v ? port->PIO_SODR : port->PIO_CODR) = mask;
-            //     }
-
-            //     static inline bool get() {
-            //         Pio* port = GetPortByPin<t_pin>();
-            //         uint32_t mask = pin::GetPinMask<t_pin>();
-
-            //         return (port->PIO_PDSR & mask) != 0;
-            //     }
-
-            //     static inline void enable_pullup() {
-            //         Pio* port = GetPortByPin<t_pin>();
-            //         uint32_t mask = pin::GetPinMask<t_pin>();
-                    
-            //         port->PIO_PUER = mask;
-            //     }
-
-            //     static inline void disable_pullup() {
-            //         Pio* port = GetPortByPin<t_pin>();
-            //         uint32_t mask = pin::GetPinMask<t_pin>();
-                    
-            //         port->PIO_PUDR = mask;
-            //     }
-            // };
+            template <pin_index t_pin>
+            static inline void disable_pullup() {
+                Pio* port = get_port_from_pin<t_pin>();
+                uint32_t mask = get_pin_mask<t_pin>();
+                
+                port->PIO_PUDR = mask;
+            }
         }
 
         /**
@@ -315,7 +287,7 @@ namespace hwstl {
             /**
              * @brief Disable baud generation for UART
              */
-            static inline void DisableBaud() {
+            static inline void disable_clock() {
                 UART->UART_BRGR = 0;
             }
 
@@ -332,7 +304,7 @@ namespace hwstl {
              * @tparam t_baudrate 
              */
             template <uint32_t t_master_clock_frequency, uint32_t t_baudrate>
-            static inline void EnableBaud() {
+            static inline void enable_clock() {
                 static_assert(FromFrequencyToPrescalerSelector(t_master_clock_frequency) != -1, "Invalid master clock frequency");
                 UART->UART_BRGR = (t_master_clock_frequency / t_baudrate) / 16;
             }
@@ -350,7 +322,7 @@ namespace hwstl {
              * @param baudrate 
              */
             template <uint32_t t_master_clock_frequency>
-            static inline void EnableBaud(uint32_t baudrate) {
+            static inline void enable(uint32_t baudrate) {
                 static_assert(FromFrequencyToPrescalerSelector(t_master_clock_frequency) != -1, "Invalid master clock frequency");
                 UART->UART_BRGR = (t_master_clock_frequency / baudrate) / 16;
             }
@@ -399,7 +371,7 @@ namespace hwstl {
 
                 NVIC_EnableIRQ(UART_IRQn);
                 
-                EnableBaud<MainClockFrequency, 115200>();
+                enable_clock<MainClockFrequency, 115200>();
 
                 // No parity, normal channel mode.
                 UART->UART_MR = UART_MR_PAR_NO;
@@ -408,7 +380,7 @@ namespace hwstl {
                 EnableTRX();
             }
 
-            static inline void Disable() {
+            static inline void disable() {
                 // Disable PIO control on PA8 and PA9
                 // Leaves peripheral mode undefined
                 PIOA->PIO_PDR = PIO_PA8;
@@ -418,6 +390,7 @@ namespace hwstl {
                 UART->UART_IDR = 0xFFFFFFFF;
 
                 // Disable clock to the UART
+                disable_clock();
                 PMC->PMC_PCER0 = 0x01 << ID_UART;
 
                 // Disable the IQR for the UART

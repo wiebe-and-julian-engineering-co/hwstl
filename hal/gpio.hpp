@@ -47,7 +47,7 @@ namespace hwstl {
 
     template <hwstl::pin_index... vt_pins>
     auto make_ipin(hwstl::pin_definition<vt_pins>... opins) {
-        hwstl::device::pin::configure_in(hwstl::pin_sequence<vt_pins...>());
+        hwstl::std_interface::pins::configure_in(hwstl::pin_sequence<vt_pins...>());
 
         return std::tuple(
             hwstl::ipin<vt_pins>()...
@@ -56,7 +56,7 @@ namespace hwstl {
 
     template <hwstl::pin_index... vt_pins>
     auto make_opin(hwstl::pin_definition<vt_pins>... opins) {
-        hwstl::device::pin::configure_out(hwstl::pin_sequence<vt_pins...>());
+        hwstl::std_interface::pins::configure_out(hwstl::pin_sequence<vt_pins...>());
 
         return std::tuple(
             hwstl::opin<vt_pins>()...
@@ -65,7 +65,7 @@ namespace hwstl {
 
     template <hwstl::pin_index... vt_pins>
     auto make_iopin(hwstl::pin_definition<vt_pins>... opins) {
-        // hwstl::std_interface::pin::configure_in_out(hwstl::pin_sequence<vt_pins...>());
+        hwstl::std_interface::pins::configure_in_out(hwstl::pin_sequence<vt_pins...>());
 
         return std::tuple(
             hwstl::iopin<vt_pins>()...

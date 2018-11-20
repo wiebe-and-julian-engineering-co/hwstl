@@ -1,6 +1,7 @@
 #pragma once
 
 #include "pin_defs.hpp"
+#include "pin_info.hpp"
 
 namespace hwstl {
     class interface_exception {
@@ -22,12 +23,20 @@ namespace hwstl {
 
             template <pin_index t_pin>
             constexpr interface_exception get();
+
+            template <pin_index t_pin>
+            constexpr interface_exception enable_pullup();
+
+            template <pin_index t_pin>
+            constexpr interface_exception disable_pullup();
         }
 
         class uart_io {
         public:
             uart_io() = delete;
 
+            constexpr interface_exception enable();
+            constexpr interface_exception disable();
             constexpr interface_exception putc(bool);
             constexpr interface_exception getc();
         };
