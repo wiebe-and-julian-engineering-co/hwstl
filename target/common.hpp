@@ -8,13 +8,34 @@
 #include "../hal/iostream.hpp"
 #include "../hal/peripheral.hpp"
 #include "../hal/gpio.hpp"
+#include "../hal/hwconfig.hpp"
 #include "type_definition.hpp"
 
 namespace hwstl {
-    static auto cout = hwstl::ostream<hwstl::target::uart_io>();
-    static auto cin = hwstl::istream<hwstl::target::uart_io>();
+    static auto cout = hwstl::ostream<hwstl::target::uart_impl<hwstl::target::uart_port::peripheral::uart>>();
+    static auto cin = hwstl::istream<hwstl::target::uart_impl<hwstl::target::uart_port::peripheral::uart>>();
     static const auto endl = '\n';
     static auto& cerr = cout;
+
+    /**
+     * @brief Generates a config ostream allowing for configuring streams
+     * 
+     * @details
+     * Constructs a config ostream class which allows for compile time
+     * optimized configuring for stream based peripherals.
+     * 
+     * @param ios Stream to configure
+     * @return _hwconfig
+     */
+    template <
+        class t_peripheral_type,
+        t_peripheral_type t_peripheral,
+        template < t_peripheral_type > class t_impl,
+        template < class > class t_ios
+    >
+    auto hwconfig(t_ios<t_impl<t_peripheral>>& ios) {
+        return _hwconfig<t_peripheral_type, t_peripheral, hwstl::target::masks>();
+    }
 
     // using iopin = hwstl::internal::iopin<hwstl::target::pin>;
     // using ipin = hwstl::internal::ipin<hwstl::target::pin>;
