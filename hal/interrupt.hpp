@@ -5,8 +5,22 @@
 
 #pragma once
 
+
+//#include "gpio.hpp"
+
 namespace hwstl {
-    using PInterruptRoutine = void (*)();
+    namespace interrupt {
+        template <hwstl::pin_index... vt_pins>
+        auto make_iopin_interrupt(hwstl::target::interrupt::mode _mode, hwstl::target::pin::pin_impl<vt_pins>... pins) {
+            hwstl::target::pin::configure_interrupt(hwstl::pin_sequence<vt_pins...>(), _mode);
+        }
+
+        template <hwstl::pin_index... vt_pins>
+        void disable(hwstl::target::pin::pin_impl<vt_pins>... pins) {
+            hwstl::target::pin::configure_interrupt(hwstl::pin_sequence<vt_pins...>());
+        }
+    }
+    /**using PInterruptRoutine = void (*)();
 
     class CInterruptBindings {
     public:
@@ -38,5 +52,5 @@ namespace hwstl {
         }
     };
 
-    extern const CInterruptBindings& g_interrupt_bindings;
+    extern const CInterruptBindings& g_interrupt_bindings;**/
 } // namespace hwstl

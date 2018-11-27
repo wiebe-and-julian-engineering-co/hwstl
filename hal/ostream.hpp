@@ -181,7 +181,11 @@ namespace hwstl {
         }
 
         inline void print_bool(const bool b) {
-            *this << (b) ? "true" : "false";
+            if (b) {
+                *this << "true";
+            } else {
+                *this << "false";
+            }
         }
 
         template <class t>

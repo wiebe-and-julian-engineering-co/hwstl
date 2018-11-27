@@ -9,6 +9,8 @@
 #include "../hal/peripheral.hpp"
 #include "../hal/gpio.hpp"
 #include "../hal/hwconfig.hpp"
+#include "../hal/internal.hpp"
+#include "../hal/interrupt.hpp"
 #include "type_definition.hpp"
 
 namespace hwstl {
@@ -36,6 +38,8 @@ namespace hwstl {
     auto hwconfig(t_ios<t_impl<t_peripheral>>& ios) {
         return _hwconfig<t_peripheral_type, t_peripheral, hwstl::target::masks>();
     }
+
+    static auto internals = hwstl::internal();
 
     // using iopin = hwstl::internal::iopin<hwstl::target::pin>;
     // using ipin = hwstl::internal::ipin<hwstl::target::pin>;

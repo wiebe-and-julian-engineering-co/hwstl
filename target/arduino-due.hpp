@@ -12,6 +12,60 @@
 #include <algorithm>
 #include <type_traits>
 
+/************************************************************************/
+/* Interrupt handlers                                                   */
+/************************************************************************/
+
+/**void HandlePIOInterrupt(Pio* pio, uint32_t status) {
+    // Interrupts on PIOC are cleared while reading PIO_ISR.
+    // When an Interrupt is enabled on a “Level”, the interrupt
+    // is generated as long as the interrupt source is not cleared, even if some read accesses in PIO_ISR are performed.
+    if (status != 0) {
+        //hwstl::cout << "Interrupted!\n";
+        //hwstl::wait_ms(20);
+
+        uint8_t i = 0;
+
+        while (status != 0) {
+            if (status & 0x01u) {
+                hwstl::cout << "P" << (unsigned int) i;
+            }
+
+            status >>= 1;
+            ++i;
+        }
+    }
+}
+
+extern void PIOA_Handler(void) {
+    uint32_t status = PIOA->PIO_ISR;
+    status &= PIOA->PIO_IMR;
+
+    HandlePIOInterrupt(PIOA, status);
+}
+
+extern void PIOB_Handler(void) {
+    uint32_t status = PIOB->PIO_ISR;
+    status &= PIOB->PIO_IMR;
+
+    HandlePIOInterrupt(PIOB, status);
+}
+
+extern void PIOC_Handler(void) {
+    uint32_t status = PIOC->PIO_ISR;
+    status &= PIOC->PIO_IMR;
+
+    HandlePIOInterrupt(PIOC, status);
+}
+
+extern void PIOD_Handler(void) {
+    uint32_t status = PIOD->PIO_ISR;
+    status &= PIOD->PIO_IMR;
+
+    HandlePIOInterrupt(PIOD, status);
+}
+}**/
+
 namespace hwstl {
     using pin_index = uint32_t;
 
@@ -34,7 +88,19 @@ namespace hwstl {
 #endif
 
         namespace internal {
+            __attribute__((always_inline))
+            static inline void watchdog_enable() {
+                WDT->WDT_MR &= ~(0x0u << 15);
+            }
+            
+            __attribute__((always_inline))
+            static inline void watchdog_disable() {
+                WDT->WDT_MR = WDT_MR_WDDIS;
+            }
+        };
 
+        namespace interrupt {
+            enum class mode { RISING, FALLING };
         };
 
         void init();
@@ -170,6 +236,62 @@ namespace hwstl {
                 PMC->PMC_PCER0 = pmc0_enable;
             }
 
+            
+            template <pin_index... vt_pins>
+            __attribute__((always_inline))
+            static inline void PinInterruptConfigure(pin_sequence<vt_pins...> pins, const interrupt::mode mode) {
+                 uint32_t masks[4] = {};
+                 uint32_t enable_mask = 0;
+                 IRQn_Type IRQn;
+                 //uint32_t nvic_enable_mask = 0x00u;
+                 //uint32_t nvic_disable_mask = 0x00u;
+
+                (ProcessPinEntry<vt_pins>(masks), ...);
+                
+                if (masks[0]) {
+                    enable_mask   |= (1 << 11);
+                    PIOA->PIO_ISR;
+                    PIOA->PIO_IDR = 0xFFFFFFFF;
+                    
+                    NVIC_DisableIRQ(PIOA_IRQn);
+                    NVIC_ClearPendingIRQ(PIOA_IRQn);
+                    NVIC_SetPriority(PIOA_IRQn, 0);
+                    NVIC_EnableIRQ(PIOA_IRQn);
+                } 
+                if (masks[1]) {
+                    enable_mask   |= (1 << 12);
+                    PIOB->PIO_ISR;
+                    PIOB->PIO_IDR = 0xFFFFFFFF;
+
+                    NVIC_DisableIRQ(PIOB_IRQn);
+                    NVIC_ClearPendingIRQ(PIOB_IRQn);
+                    NVIC_SetPriority(PIOB_IRQn, 0);
+                    NVIC_EnableIRQ(PIOB_IRQn);
+                } 
+                if (masks[2]) {
+                    enable_mask   |= (1 << 13);
+                    PIOC->PIO_ISR;
+                    PIOC->PIO_IDR = 0xFFFFFFFF;
+                    NVIC_DisableIRQ(PIOC_IRQn);
+                    NVIC_ClearPendingIRQ(PIOC_IRQn);
+                    NVIC_SetPriority(PIOC_IRQn, 0);
+                    NVIC_EnableIRQ(PIOC_IRQn);
+                } 
+                if (masks[3]) {
+                    enable_mask   |= (1 << 14);
+                    PIOD->PIO_ISR;
+                    PIOD->PIO_IDR = 0xFFFFFFFF;
+
+                    NVIC_DisableIRQ(PIOD_IRQn);
+                    NVIC_ClearPendingIRQ(PIOD_IRQn);
+                    NVIC_SetPriority(PIOD_IRQn, 0);
+                    NVIC_EnableIRQ(PIOD_IRQn);
+                }
+
+                PMC->PMC_PCER0 = enable_mask;
+
+            }
+
             template <pin_index... vt_pins>
             __attribute__((always_inline))
             static inline void configure_in(pin_sequence<vt_pins...> pins) {
@@ -186,6 +308,13 @@ namespace hwstl {
             __attribute__((always_inline))
             static inline void configure_inout(pin_sequence<vt_pins...> pins) {
                 PinSequenceEnable(pins);
+            }
+
+            template <pin_index... vt_pins>
+            __attribute__((always_inline))
+            static inline void configure_interrupt(pin_sequence<vt_pins...> pins, const interrupt::mode mode) {
+                PinSequenceEnable(pins);
+                PinInterruptConfigure(pins, mode);
             }
 
             template <pin_index t_pin>
