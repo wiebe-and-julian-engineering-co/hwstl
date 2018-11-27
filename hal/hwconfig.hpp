@@ -89,6 +89,8 @@ namespace hwstl {
     /**
      * @brief Compile time << operator
      * 
+     * @addtogroup  Broken
+     * 
      * @details
      * Applies the manipulator to the underlying hardware peripheral of the
      * iostream wrapped by hwconfig. Register IO is combined as much as
@@ -98,26 +100,26 @@ namespace hwstl {
      * @param conf Config item <<'ed into hwconfig
      * @return hwconfig
      */
-    template <
-        class t_peripheral_type,
-        t_peripheral_type t_peripheral,
-        template <class, t_peripheral_type, class...> class t_applicator,
-        template <class, t_peripheral_type, template <class, t_peripheral_type, class...> class, class...> class t_config_os,
-        uint32_t t_applied_setting,
-        class... vt_pairs,
-        class... vt_params
-    >
-    constexpr auto operator<< (
-        t_config_os<
-            t_peripheral_type,
-            t_peripheral,
-            t_applicator,
-            vt_pairs...
-        >&& config_os,
-        const hwstl::target::constant_stream_manipulator<t_applied_setting, vt_params...> conf
-    ) {
-        // Prevent multiple register writes by unsetting the destruct flag
-        config_os.destruct = false;
-        return _hwconfig<t_peripheral_type, t_peripheral, t_applicator, setting_params<t_applied_setting, true>>();
-    }
+    // template <
+    //     class t_peripheral_type,
+    //     t_peripheral_type t_peripheral,
+    //     template <class, t_peripheral_type, class...> class t_applicator,
+    //     template <class, t_peripheral_type, template <class, t_peripheral_type, class...> class, class...> class t_config_os,
+    //     uint32_t t_applied_setting,
+    //     class... vt_pairs,
+    //     class... vt_params
+    // >
+    // constexpr auto operator<< (
+    //     t_config_os<
+    //         t_peripheral_type,
+    //         t_peripheral,
+    //         t_applicator,
+    //         vt_pairs...
+    //     >&& config_os,
+    //     const hwstl::target::constant_stream_manipulator<t_applied_setting, vt_params...> conf
+    // ) {
+    //     // Prevent multiple register writes by unsetting the destruct flag
+    //     config_os.destruct = false;
+    //     return _hwconfig<t_peripheral_type, t_peripheral, t_applicator, setting_params<t_applied_setting, true>>();
+    // }
 }
