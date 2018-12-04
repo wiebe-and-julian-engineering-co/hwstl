@@ -11,16 +11,11 @@
 #include "../memory/ring_buffer.hpp"
 
 namespace hwstl {
-    //static auto cout = hwstl::ostream<hwstl::target::uart_io>();
-    //static auto cin = hwstl::istream<hwstl::target::uart_io>();
+    static auto cout = hwstl::ostream<hwstl::std_interface::uart_io>();
+    
+    static auto cin = hwstl::istream<hwstl::std_interface::uart_io>();
     static const auto endl = '\n';
-    //static auto& cerr = cout;
-
-    // using iopin = hwstl::internal::iopin<hwstl::target::pin>;
-    // using ipin = hwstl::internal::ipin<hwstl::target::pin>;
-    // using opin = hwstl::internal::opin<hwstl::target::pin>;
-
-
+    static auto& cerr = cout;
 
     void main();
 } // namespace hwstl

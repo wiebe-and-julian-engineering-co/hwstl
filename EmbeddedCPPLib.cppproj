@@ -244,6 +244,12 @@
     <Compile Include="target\arduino-due\arduino-due.hpp">
       <SubType>compile</SubType>
     </Compile>
+    <Compile Include="target\arduino-due\uart.cpp">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="target\arduino-due\uart.hpp">
+      <SubType>compile</SubType>
+    </Compile>
     <Compile Include="target\common.hpp">
       <SubType>compile</SubType>
     </Compile>
@@ -257,6 +263,9 @@
       <SubType>compile</SubType>
     </Compile>
     <Compile Include="target\std_interface\pin_info.hpp">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="target\std_interface\signature.hpp">
       <SubType>compile</SubType>
     </Compile>
     <Compile Include="target\std_interface\std_interface.hpp">

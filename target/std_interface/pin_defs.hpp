@@ -1,8 +1,8 @@
 #pragma once
 
 #include <cstdint>
-
 #include <utility>
+#include <algorithm>
 
 namespace hwstl {
     using pin_index = size_t;

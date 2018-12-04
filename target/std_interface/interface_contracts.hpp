@@ -35,10 +35,11 @@ namespace hwstl {
         public:
             uart_io() = delete;
 
-            constexpr interface_exception enable();
-            constexpr interface_exception disable();
-            constexpr interface_exception putc(bool);
-            constexpr interface_exception getc();
+            static constexpr interface_exception enable();
+            static constexpr interface_exception disable();
+            static constexpr interface_exception putc(const unsigned char);
+            static constexpr interface_exception getc();
+            static constexpr interface_exception available();
         };
     }
 };
