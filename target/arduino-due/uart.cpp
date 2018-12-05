@@ -5,12 +5,13 @@
  *  Author: Wiebe
  */ 
 
-#include "uart.hpp"
+
 #include <sam3xa.h>
 
+#ifdef HWSTL_UART_ENABLE
+#include "uart.hpp"
 hwstl::ring_buffer<uint8_t, 64> hwstl::arduino_due::uart_io::uartReceiveBuffer;
 hwstl::ring_buffer<uint8_t, 64> hwstl::arduino_due::uart_io::uartTransmitBuffer;
-
 
 
 void hwstl::arduino_due::uart_io::IRQHandler() {
@@ -37,5 +38,7 @@ void hwstl::arduino_due::uart_io::IRQHandler() {
 }
 
 extern void UART_Handler(void) {
-hwstl::arduino_due::uart_io::IRQHandler();
+    hwstl::arduino_due::uart_io::IRQHandler();
 }
+
+#endif

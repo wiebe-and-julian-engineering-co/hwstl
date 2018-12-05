@@ -15,7 +15,9 @@
 
 #include "../std_interface/interface_contracts.hpp"
 
+#ifdef HWSTL_ENABLE_UART
 #include "uart.hpp"
+#endif
 
 namespace hwstl {
     namespace arduino_due {
@@ -116,29 +118,14 @@ namespace hwstl {
                 return 1;
             }
 
-            template <pin_index... vt_pins>
-            static inline constexpr void configure_in(pin_sequence<vt_pins...> pins) {
-
-            }
-            
-            template <pin_index... vt_pins>
-            static inline constexpr void configure_out(pin_sequence<vt_pins...> pins) {
-
-            }
-            
-            template <pin_index... vt_pins>
-            static inline constexpr void configure_in_out(pin_sequence<vt_pins...> pins) {
-
-            }
-
             template <pin_index t_pin>
             static inline constexpr void ProcessPinEntry(uint32_t masks[4]) {
                 uint8_t port = pin_info_array[t_pin].m_port;
 
                 if (port == 0) {
-                    masks[0] |= get_pin_mask<t_pin>(); 
+                    masks[0] |= get_pin_mask<t_pin>();
                 } else if (port == 1) {
-                    masks[1] |= get_pin_mask<t_pin>(); 
+                    masks[1] |= get_pin_mask<t_pin>();
                 } else if (port == 2) {
                     masks[2] |= get_pin_mask<t_pin>();
                 } else if (port == 3) {
@@ -166,7 +153,7 @@ namespace hwstl {
                     PIOB->PIO_PER = masks[1];
                     PIOB->PIO_OER = masks[1];
                 }
-            
+                
                 if (masks[2]) {
                     pmc0_enable   |= (1 << 13);
 
@@ -182,6 +169,21 @@ namespace hwstl {
                 }
 
                 PMC->PMC_PCER0 = pmc0_enable;
+            }
+
+            template <pin_index... vt_pins>
+            static inline constexpr void configure_in(pin_sequence<vt_pins...> pins) {
+                PinSequenceEnable(pins);
+            }
+            
+            template <pin_index... vt_pins>
+            static inline constexpr void configure_out(pin_sequence<vt_pins...> pins) {
+                PinSequenceEnable(pins);
+            }
+            
+            template <pin_index... vt_pins>
+            static inline constexpr void configure_in_out(pin_sequence<vt_pins...> pins) {
+                PinSequenceEnable(pins);
             }
             
             template <pin_index t_pin>

@@ -1,5 +1,7 @@
 #pragma once
 
+#include "../hwstl_config.hpp"
+
 #if TARGET == arduino_due
 #include "arduino-due/arduino-due.hpp"
 namespace hwstl {

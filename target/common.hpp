@@ -5,17 +5,21 @@
 
 #pragma once
 
+#include "../hwstl_config.hpp"
 #include "../hal/iostream.hpp"
 #include "../hal/peripheral.hpp"
 #include "../hal/gpio.hpp"
 #include "../memory/ring_buffer.hpp"
 
 namespace hwstl {
+    
+#ifdef HWSTL_ENABLE_UART
     static auto cout = hwstl::ostream<hwstl::std_interface::uart_io>();
     
     static auto cin = hwstl::istream<hwstl::std_interface::uart_io>();
     static const auto endl = '\n';
     static auto& cerr = cout;
+#endif
 
     void main();
 } // namespace hwstl

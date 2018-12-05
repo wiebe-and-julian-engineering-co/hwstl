@@ -12,8 +12,16 @@ void hwstl::main() {
         hwstl::pins::d7
     );
 
+    d13.set(false);
+
     while (true) {
         (void) d13.set(true);
         (void) d7.get();
+
+        hwstl::device::wait_ms(1000);
+
+        (void) d13.set(false);
+
+        hwstl::device::wait_ms(1000);
     }
 }
