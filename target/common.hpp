@@ -5,19 +5,24 @@
 
 #pragma once
 
+#include "../hwstl_config.hpp"
 #include "../hal/iostream.hpp"
 #include "../hal/peripheral.hpp"
 #include "../hal/gpio.hpp"
+#include "../memory/ring_buffer.hpp"
 #include "../hal/hwconfig.hpp"
 #include "../hal/internal.hpp"
 #include "../hal/interrupt.hpp"
 #include "type_definition.hpp"
 
 namespace hwstl {
-    static auto cout = hwstl::ostream<hwstl::target::uart_impl<hwstl::target::uart_port::peripheral::uart>>();
-    static auto cin = hwstl::istream<hwstl::target::uart_impl<hwstl::target::uart_port::peripheral::uart>>();
+    
+#ifdef HWSTL_ENABLE_UART
+    static auto cout = hwstl::ostream<hwstl::std_interface::uart_io>();
+    static auto cin = hwstl::istream<hwstl::std_interface::uart_io>();
     static const auto endl = '\n';
     static auto& cerr = cout;
+#endif
 
     /**
      * @brief Generates a config ostream allowing for configuring streams
@@ -25,6 +30,8 @@ namespace hwstl {
      * @details
      * Constructs a config ostream class which allows for compile time
      * optimized configuring for stream based peripherals.
+     * 
+     * @addtogroup Broken
      * 
      * @param ios Stream to configure
      * @return _hwconfig
@@ -36,39 +43,14 @@ namespace hwstl {
         template < class > class t_ios
     >
     auto hwconfig(t_ios<t_impl<t_peripheral>>& ios) {
-        return _hwconfig<t_peripheral_type, t_peripheral, hwstl::target::masks>();
-    }
-
-    static auto internals = hwstl::internal();
-
-    // using iopin = hwstl::internal::iopin<hwstl::target::pin>;
-    // using ipin = hwstl::internal::ipin<hwstl::target::pin>;
-    // using opin = hwstl::internal::opin<hwstl::target::pin>;
-
-    inline uint_fast64_t now_ticks() {
-        return target::now_ticks();
-    }
-
-    inline uint64_t now_us() {
-        return target::now_us();
-    }
-
-    inline void wait_us_busy(int_fast32_t n) {
-        target::wait_us_busy(n);
-    }
-
-    inline void wait_us(int_fast32_t n) {
-        target::wait_us_busy(n);
-    }
-
-    inline void wait_ms(int_fast32_t n) {
-        target::wait_ms(n);
+        // return _hwconfig<t_peripheral_type, t_peripheral, hwstl::target::masks>();
     }
 
     void main();
 } // namespace hwstl
 
 int main() {
-    hwstl::target::init();
+    //hwstl::target::init();
+    hwstl::device::init();
     hwstl::main();
 }

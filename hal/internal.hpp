@@ -5,12 +5,18 @@ namespace hwstl {
     public:
         internal() {};
 
+        /**
+         * @addtogroup Broken 
+         */
         inline void watchdog_enable() const {
-            hwstl::target::internal::watchdog_enable();
+            // hwstl::device::internal::watchdog_enable();
         }
 
+        /**
+         * @addtogroup Broken
+         */
         inline void watchdog_disable() const {
-            hwstl::target::internal::watchdog_disable(); 
+            // hwstl::device::internal::watchdog_disable(); 
         }
     };
 } // namespace hwstls

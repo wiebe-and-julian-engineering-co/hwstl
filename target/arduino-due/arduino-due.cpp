@@ -4,7 +4,7 @@
 //          https://www.boost.org/LICENSE_1_0.txt)
 
 #include "arduino-due.hpp" 
-#include <sam3xa.h>
+
  
 void hwstl::arduino_due::init() {
     SystemInit();
@@ -65,3 +65,5 @@ void hwstl::arduino_due::wait_ms(int_fast32_t n) {
         --n;
     }
 }
+
+

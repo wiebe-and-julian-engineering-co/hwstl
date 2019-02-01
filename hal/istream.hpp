@@ -33,6 +33,14 @@ namespace hwstl {
         // istream& operator>> (ios& (*pf)(ios&));
         // istream& operator>> (ios_base& (*pf)(ios_base&));
     public:
+        size_t available() {
+            return t_io::available();
+        }
+
+        unsigned char getc() {
+            return t_io::getc();
+        }
+
         ///< Aruthmetic types (1)
         istream& operator>> (signed char& val) {
             val = t_io::getc();

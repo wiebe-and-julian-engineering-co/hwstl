@@ -238,16 +238,40 @@
     <Compile Include="main.cpp">
       <SubType>compile</SubType>
     </Compile>
-    <Compile Include="memory\MemoryPool.hpp">
+    <Compile Include="target\arduino-due\arduino-due.cpp">
       <SubType>compile</SubType>
     </Compile>
-    <Compile Include="target\arduino-due.cpp">
+    <Compile Include="target\arduino-due\arduino-due.hpp">
       <SubType>compile</SubType>
     </Compile>
-    <Compile Include="target\arduino-due.hpp">
+    <Compile Include="target\arduino-due\uart.cpp">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="target\arduino-due\uart.hpp">
       <SubType>compile</SubType>
     </Compile>
     <Compile Include="target\common.hpp">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="target\std_interface\interface_contracts.hpp">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="target\std_interface\pin.hpp">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="target\std_interface\pin_defs.hpp">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="target\std_interface\pin_info.hpp">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="target\std_interface\signature.hpp">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="target\std_interface\std_interface.hpp">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="target\std_interface\uart.hpp">
       <SubType>compile</SubType>
     </Compile>
     <Compile Include="target\target.hpp">
@@ -267,6 +291,8 @@
     <Folder Include="lib\IOPin\" />
     <Folder Include="memory\" />
     <Folder Include="target\" />
+    <Folder Include="target\arduino-due\" />
+    <Folder Include="target\std_interface\" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Device_Startup\sam3x8e_flash.ld">

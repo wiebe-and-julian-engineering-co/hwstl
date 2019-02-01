@@ -30,7 +30,7 @@ set (cxxflags
     "-ffunction-sections"
     "-fdata-sections"
     "-fno-exceptions"
-    "-fno-rtti"
+    #"-fno-rtti"
     "-fno-threadsafe-statics"
     # "-nostdlib"
     "-std=c++17")

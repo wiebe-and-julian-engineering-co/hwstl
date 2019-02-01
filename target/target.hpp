@@ -1,10 +1,14 @@
 #pragma once
 
+#include "../hwstl_config.hpp"
+
 #if TARGET == arduino_due
-#include "arduino-due.hpp"
+#include "arduino-due/arduino-due.hpp"
 namespace hwstl {
-    namespace target = hwstl::arduino_due;
+    namespace device = hwstl::arduino_due;
+    namespace pins = device::pins;
 }
+#include "std_interface/std_interface.hpp"
 #endif
 
 #include "common.hpp"
